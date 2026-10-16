@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق إدارة عيادة الأسنان - Doctor Clinic</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800" x-data="clinicApp()">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
+            <div>
+                <div class="p-5 text-xl font-bold border-b border-slate-800 flex items-center gap-2">
+                    <span class="text-blue-400">🦷</span> عيادة الأسنان الذكية
+                </div>
+                <nav class="p-4 space-y-2">
+                    <button @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">الرئيسية والإحصائيات</button>
+                    <button @click="currentTab = 'patients'" :class="currentTab === 'patients' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">إدارة المرضى</button>
+                    <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">المواعيد والأجندة</button>
+                    <button @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">الحسابات والمالية</button>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-400 text-center">
+                نسخة الطبيب المعتمدة © 2026
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            
+            <!-- Top Navbar -->
+            <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
+                <h1 class="text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
+                <div class="flex items-center gap-3">
+                    <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">د. أحمد (طبيب الأسنان)</span>
+                </div>
+            </header>
+
+            <!-- Dynamic Views -->
+            <main class="p-6">
+                
+                <!-- 1. Dashboard View -->
+                <div x-show="currentTab === 'dashboard'" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">إجمالي المرضى</p>
+                                <h3 class="text-2xl font-bold mt-1 text-slate-800" x-text="patients.length"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">👥</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">مواعيد اليوم</p>
+                                <h3 class="text-2xl font-bold mt-1 text-slate-800" x-text="appointments.length"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl">📅</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">إجمالي الإيرادات</p>
+                                <h3 class="text-2xl font-bold mt-1 text-slate-800" x-text="totalRevenue() + ' ر.س'"></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-xl">💰</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Patients View -->
+                <div x-show="currentTab === 'patients'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-slate-800">قائمة المرضى والسجلات الطبية</h2>
+                        <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">+ إضافة مريض جديد</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-sm">
+                                    <th class="p-4">اسم المريض</th>
+                                    <th class="p-4">رقم الهاتف</th>
+                                    <th class="p-4">العمر</th>
+                                    <th class="p-4">التاريخ الطبي/ملاحظات</th>
+                                    <th class="p-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y text-sm">
+                                <template x-for="patient in patients" :key="patient.id">
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800" x-text="patient.name"></td>
+                                        <td class="p-4 text-gray-600" x-text="patient.phone"></td>
+                                        <td class="p-4 text-gray-600" x-text="patient.age"></td>
+                                        <td class="p-4 text-red-600 font-medium" x-text="patient.medicalHistory || 'لا يوجد'"></td>
+                                        <td class="p-4 text-center space-x-2 space-x-reverse">
+                                            <button @click="deletePatient(patient.id)" class="text-red-500 hover:text-red-700 font-semibold">حذف</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="patients.length === 0">
+                                    <tr><td colspan="5" class="p-6 text-center text-gray-400">لا يوجد مرضى مسجلين حالياً.</td></tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Appointments View -->
+                <div x-show="currentTab === 'appointments'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-slate-800">جدول المواعيد اليومية</h2>
+                        <button @click="openAppointmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">+ حجز موعد جديد</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-sm">
+                                    <th class="p-4">اسم المريض</th>
+                                    <th class="p-4">نوع الإجراء</th>
+                                    <th class="p-4">التاريخ والوقت</th>
+                                    <th class="p-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y text-sm">
+                                <template x-for="app in appointments" :key="app.id">
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800" x-text="app.patientName"></td>
+                                        <td class="p-4 text-gray-600" x-text="app.service"></td>
+                                        <td class="p-4 text-gray-600" x-text="app.dateTime"></td>
+                                        <td class="p-4 text-center">
+                                            <button @click="deleteAppointment(app.id)" class="text-red-500 hover:text-red-700 font-semibold">إلغاء الموعد</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="appointments.length === 0">
+                                    <tr><td colspan="4" class="p-6 text-center text-gray-400">لا توجد مواعيد مسجلة اليوم.</td></tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. Finance View -->
+                <div x-show="currentTab === 'finance'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-slate-800">سجل الإيرادات والمالية</h2>
+                        <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">+ تسجيل دفعة مالية</button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <table class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-sm">
+                                    <th class="p-4">اسم المريض</th>
+                                    <th class="p-4">الخدمة المقدمة</th>
+                                    <th class="p-4">المبلغ (ر.س)</th>
+                                    <th class="p-4 text-center">الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y text-sm">
+                                <template x-for="tx in finances" :key="tx.id">
+                                    <tr>
+                                        <td class="p-4 font-semibold text-slate-800" x-text="tx.patientName"></td>
+                                        <td class="p-4 text-gray-600" x-text="tx.service"></td>
+                                        <td class="p-4 font-bold text-emerald-600" x-text="tx.amount"></td>
+                                        <td class="p-4 text-center">
+                                            <button @click="deleteFinance(tx.id)" class="text-red-500 hover:text-red-700 font-semibold">حذف</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="finances.length === 0">
+                                    <tr><td colspan="4" class="p-6 text-center text-gray-400">لا توجد سجلات مالية بعد.</td></tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals (Popups) -->
+    <!-- Patient Modal -->
+    <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">إضافة مريض جديد</h3>
+            <input type="text" x-model="newPatient.name" placeholder="اسم المريض" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newPatient.phone" placeholder="رقم الهاتف" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="number" x-model="newPatient.age" placeholder="العمر" class="w-full border p-2.5 rounded-lg text-sm">
+            <textarea x-model="newPatient.medicalHistory" placeholder="التاريخ الطبي / الحساسية / أمراض مزمنة" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showPatientModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
+                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Modal -->
+    <div x-show="showAppointmentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">حجز موعد جديد</h3>
+            <input type="text" x-model="newApp.patientName" placeholder="اسم المريض" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newApp.service" placeholder="نوع الإجراء (مثال: حشوة، سحب عصب)" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="datetime-local" x-model="newApp.dateTime" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showAppointmentModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
+                <button @click="saveAppointment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ الموعد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finance Modal -->
+    <div x-show="showFinanceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">تسجيل معاملة مالية</h3>
+            <input type="text" x-model="newTx.patientName" placeholder="اسم المريض" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newTx.service" placeholder="الخدمة المقدمة" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="number" x-model="newTx.amount" placeholder="المبلغ (ر.س)" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showFinanceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
+                <button @click="saveFinance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ الدفعة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Logic -->
+    <script>
+        function clinicApp() {
+            return {
+                currentTab: 'dashboard',
+                showPatientModal: false,
+                showAppointmentModal: false,
+                showFinanceModal: false,
+                
+                patients: JSON.parse(localStorage.getItem('clinic_patients')) || [],
+                appointments: JSON.parse(localStorage.getItem('clinic_appointments')) || [],
+                finances: JSON.parse(localStorage.getItem('clinic_finances')) || [],
+
+                newPatient: { name: '', phone: '', age: '', medicalHistory: '' },
+                newApp: { patientName: '', service: '', dateTime: '' },
+                newTx: { patientName: '', service: '', amount: '' },
+
+                getPageTitle() {
+                    if (this.currentTab === 'dashboard') return 'لوحة التحكم والإحصائيات';
+                    if (this.currentTab === 'patients') return 'إدارة المرضى والسجلات الطبية';
+                    if (this.currentTab === 'appointments') return 'جدول المواعيد';
+                    if (this.currentTab === 'finance') return 'الحسابات والمالية';
+                },
+
+                openPatientModal() { this.newPatient = { name: '', phone: '', age: '', medicalHistory: '' }; this.showPatientModal = true; },
+                savePatient() {
+                    if(!this.newPatient.name) return alert('الرجاء إدخال اسم المريض');
+                    this.patients.push({ id: Date.now(), ...this.newPatient });
+                    localStorage.setItem('clinic_patients', JSON.stringify(this.patients));
+                    this.showPatientModal = false;
+                },
+                deletePatient(id) {
+                    this.patients = this.patients.filter(p => p.id !== id);
+                    localStorage.setItem('clinic_patients', JSON.stringify(this.patients));
+                },
+
+                openAppointmentModal() { this.newApp = { patientName: '', service: '', dateTime: '' }; this.showAppointmentModal = true; },
+                saveAppointment() {
+                    if(!this.newApp.patientName) return alert('الرجاء إدخال اسم المريض');
+                    this.appointments.push({ id: Date.now(), ...this.newApp });
+                    localStorage.setItem('clinic_appointments', JSON.stringify(this.appointments));
+                    this.showAppointmentModal = false;
+                },
+                deleteAppointment(id) {
+                    this.appointments = this.appointments.filter(a => a.id !== id);
+                    localStorage.setItem('clinic_appointments', JSON.stringify(this.appointments));
+                },
+
+                openFinanceModal() { this.newTx = { patientName: '', service: '', amount: '' }; this.showFinanceModal = true; },
+                saveFinance() {
+                    if(!this.newTx.amount) return alert('الرجاء إدخال المبلغ');
+                    this.finances.push({ id: Date.now(), ...this.newTx });
+                    localStorage.setItem('clinic_finances', JSON.stringify(this.finances));
+                    this.showFinanceModal = false;
+                },
+                deleteFinance(id) {
+                    this.finances = this.finances.filter(f => f.id !== id);
+                    localStorage.setItem('clinic_finances', JSON.stringify(this.finances));
+                },
+
+                totalRevenue() {
+                    return this.finances.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
