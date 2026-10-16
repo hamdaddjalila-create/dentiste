@@ -10,6 +10,12 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Google Fonts (Cairo) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase App & Services Scripts (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         body { font-family: 'Cairo', sans-serif; }
     </style>
@@ -268,12 +274,8 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+    <!-- Firebase Initialization Script -->
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBXmd7pjdj7hyuhhSyTK7_gTufkCjzI--c",
             authDomain: "dentist-app-f2751.firebaseapp.com",
@@ -284,14 +286,12 @@
             measurementId: "G-0NSRW400TN"
         };
 
-        const app = initializeApp(firebaseConfig);
-        window.auth = getAuth(app);
-        window.db = getFirestore(app);
-
-        window.fbAuth = { signInWithEmailAndPassword, onAuthStateChanged, signOut };
-        window.fbStore = { collection, addDoc, getDocs, deleteDoc, doc, query, where };
+        firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
     </script>
 
+    <!-- App Logic Script -->
     <script>
         function clinicApp() {
             return {
@@ -319,22 +319,18 @@
                 newTx: { patientName: '', service: '', amount: '' },
 
                 initApp() {
-                    const checkInterval = setInterval(() => {
-                        if (window.auth) {
-                            clearInterval(checkInterval);
-                            window.fbAuth.onAuthStateChanged(window.auth, (user) => {
-                                if (user) {
-                                    this.currentUser = user;
-                                    this.currentUserEmail = user.email;
-                                    this.isLoggedIn = true;
-                                    this.loadCloudData();
-                                } else {
-                                    this.isLoggedIn = false;
-                                    this.currentUser = null;
-                                }
-                            });
+                    window.auth.onAuthStateChanged((user) => {
+                        if (user) {
+                            this.currentUser = user;
+                            this.currentUserEmail = user.email;
+                            this.isLoggedIn = true;
+                            this.loadCloudData();
+                        } else {
+                            this.isLoggedIn = false;
+                            this.currentUser = null;
+                            this.currentUserEmail = '';
                         }
-                    }, 200);
+                    });
                 },
 
                 async login() {
@@ -345,15 +341,15 @@
                     this.loadingAuth = true;
                     this.authError = '';
                     try {
-                        await window.fbAuth.signInWithEmailAndPassword(window.auth, this.loginEmail.trim(), this.loginPassword);
+                        await window.auth.signInWithEmailAndPassword(this.loginEmail.trim(), this.loginPassword);
                     } catch (e) {
                         console.error("Firebase Login Error:", e);
-                        if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+                        if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-email') {
                             this.authError = 'خطأ في بيانات الدخول! تأكد من الإيميل وكلمة السر.';
                         } else if (e.code === 'auth/user-disabled') {
                             this.authError = 'تم تعطيل هذا الحساب من الإدارة.';
                         } else {
-                            this.authError = 'حدث خطأ في الاتصال بالخادم. يرجى إعادة المحاولة.';
+                            this.authError = 'خطأ في الاتصال بالخادم: ' + e.message;
                         }
                     } finally {
                         this.loadingAuth = false;
@@ -361,26 +357,25 @@
                 },
 
                 async logout() {
-                    await window.fbAuth.signOut(window.auth);
+                    await window.auth.signOut();
                     this.isLoggedIn = false;
                 },
 
                 async loadCloudData() {
                     this.loadingData = true;
                     try {
-                        const { collection, getDocs, query, where } = window.fbStore;
                         const uid = this.currentUser.uid;
 
                         // جلب المرضى الخاصين بالطبيب فقط
-                        const pSnap = await getDocs(query(collection(window.db, "patients"), where("uid", "==", uid)));
+                        const pSnap = await window.db.collection("patients").where("uid", "==", uid).get();
                         this.patients = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
                         // جلب المواعيد
-                        const aSnap = await getDocs(query(collection(window.db, "appointments"), where("uid", "==", uid)));
+                        const aSnap = await window.db.collection("appointments").where("uid", "==", uid).get();
                         this.appointments = aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
                         // جلب الحسابات
-                        const fSnap = await getDocs(query(collection(window.db, "finances"), where("uid", "==", uid)));
+                        const fSnap = await window.db.collection("finances").where("uid", "==", uid).get();
                         this.finances = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     } catch (e) {
                         console.error("Error loading cloud data:", e);
@@ -399,45 +394,39 @@
                 openPatientModal() { this.newPatient = { name: '', phone: '', age: '', medicalHistory: '' }; this.showPatientModal = true; },
                 async savePatient() {
                     if(!this.newPatient.name) return alert('الرجاء إدخال اسم المريض');
-                    const { collection, addDoc } = window.fbStore;
                     const data = { ...this.newPatient, uid: this.currentUser.uid };
-                    const res = await addDoc(collection(window.db, "patients"), data);
+                    const res = await window.db.collection("patients").add(data);
                     this.patients.push({ id: res.id, ...data });
                     this.showPatientModal = false;
                 },
                 async deletePatient(id) {
-                    const { doc, deleteDoc } = window.fbStore;
-                    await deleteDoc(doc(window.db, "patients", id));
+                    await window.db.collection("patients").doc(id).delete();
                     this.patients = this.patients.filter(p => p.id !== id);
                 },
 
                 openAppointmentModal() { this.newApp = { patientName: '', service: '', dateTime: '' }; this.showAppointmentModal = true; },
                 async saveAppointment() {
                     if(!this.newApp.patientName) return alert('الرجاء إدخال اسم المريض');
-                    const { collection, addDoc } = window.fbStore;
                     const data = { ...this.newApp, uid: this.currentUser.uid };
-                    const res = await addDoc(collection(window.db, "appointments"), data);
+                    const res = await window.db.collection("appointments").add(data);
                     this.appointments.push({ id: res.id, ...data });
                     this.showAppointmentModal = false;
                 },
                 async deleteAppointment(id) {
-                    const { doc, deleteDoc } = window.fbStore;
-                    await deleteDoc(doc(window.db, "appointments", id));
+                    await window.db.collection("appointments").doc(id).delete();
                     this.appointments = this.appointments.filter(a => a.id !== id);
                 },
 
                 openFinanceModal() { this.newTx = { patientName: '', service: '', amount: '' }; this.showFinanceModal = true; },
                 async saveFinance() {
                     if(!this.newTx.amount) return alert('الرجاء إدخال المبلغ');
-                    const { collection, addDoc } = window.fbStore;
                     const data = { ...this.newTx, uid: this.currentUser.uid };
-                    const res = await addDoc(collection(window.db, "finances"), data);
+                    const res = await window.db.collection("finances").add(data);
                     this.finances.push({ id: res.id, ...data });
                     this.showFinanceModal = false;
                 },
                 async deleteFinance(id) {
-                    const { doc, deleteDoc } = window.fbStore;
-                    await deleteDoc(doc(window.db, "finances", id));
+                    await window.db.collection("finances").doc(id).delete();
                     this.finances = this.finances.filter(f => f.id !== id);
                 },
 
