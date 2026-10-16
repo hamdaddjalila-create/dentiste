@@ -36,7 +36,7 @@
                 </div>
             </div>
 
-            <div x-show="authError" class="text-red-500 text-xs font-semibold" x-text="authError"></div>
+            <div x-show="authError" class="text-red-500 text-xs font-semibold bg-red-50 p-3 rounded-xl border border-red-200" x-text="authError"></div>
 
             <button @click="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
                 <span x-show="!loadingAuth">دخول إلى النظام</span>
@@ -274,8 +274,7 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ⚠️ ضعي إعدادات Firebase الخاصة بمشروعك هنا ⚠️
-const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyBXmd7pjdj7hyuhhSyTK7_gTufkCjzI--c",
             authDomain: "dentist-app-f2751.firebaseapp.com",
             projectId: "dentist-app-f2751",
@@ -299,143 +298,4 @@ const firebaseConfig = {
                 isLoggedIn: false,
                 currentTab: 'dashboard',
                 loadingAuth: false,
-                loadingData: false,
-                authError: '',
-                currentUser: null,
-                currentUserEmail: '',
-
-                loginEmail: '',
-                loginPassword: '',
-
-                showPatientModal: false,
-                showAppointmentModal: false,
-                showFinanceModal: false,
-
-                patients: [],
-                appointments: [],
-                finances: [],
-
-                newPatient: { name: '', phone: '', age: '', medicalHistory: '' },
-                newApp: { patientName: '', service: '', dateTime: '' },
-                newTx: { patientName: '', service: '', amount: '' },
-
-                initApp() {
-                    const checkInterval = setInterval(() => {
-                        if (window.auth) {
-                            clearInterval(checkInterval);
-                            window.fbAuth.onAuthStateChanged(window.auth, (user) => {
-                                if (user) {
-                                    this.currentUser = user;
-                                    this.currentUserEmail = user.email;
-                                    this.isLoggedIn = true;
-                                    this.loadCloudData();
-                                } else {
-                                    this.isLoggedIn = false;
-                                    this.currentUser = null;
-                                }
-                            });
-                        }
-                    }, 200);
-                },
-
-                async login() {
-                    if (!this.loginEmail || !this.loginPassword) {
-                        this.authError = 'الرجاء كتابة البريد وكلمة السر';
-                        return;
-                    }
-                    this.loadingAuth = true;
-                    this.authError = '';
-                    try {
-                        await window.fbAuth.signInWithEmailAndPassword(window.auth, this.loginEmail, this.loginPassword);
-                    } catch (e) {
-                        this.authError = 'خطأ في بيانات الدخول! تأكد من الإيميل وكلمة السر.';
-                    } finally {
-                        this.loadingAuth = false;
-                    }
-                },
-
-                async logout() {
-                    await window.fbAuth.signOut(window.auth);
-                    this.isLoggedIn = false;
-                },
-
-                async loadCloudData() {
-                    this.loadingData = true;
-                    const { collection, getDocs, query, where } = window.fbStore;
-                    const uid = this.currentUser.uid;
-
-                    // جلب المرضى الخاصين بالطبيب فقط
-                    const pSnap = await getDocs(query(collection(window.db, "patients"), where("uid", "==", uid)));
-                    this.patients = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                    // جلب المواعيد
-                    const aSnap = await getDocs(query(collection(window.db, "appointments"), where("uid", "==", uid)));
-                    this.appointments = aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                    // جلب الحسابات
-                    const fSnap = await getDocs(query(collection(window.db, "finances"), where("uid", "==", uid)));
-                    this.finances = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-                    this.loadingData = false;
-                },
-
-                getPageTitle() {
-                    if (this.currentTab === 'dashboard') return 'لوحة التحكم والإحصائيات';
-                    if (this.currentTab === 'patients') return 'إدارة المرضى والسجلات الطبية';
-                    if (this.currentTab === 'appointments') return 'جدول المواعيد';
-                    if (this.currentTab === 'finance') return 'الحسابات والمالية';
-                },
-
-                openPatientModal() { this.newPatient = { name: '', phone: '', age: '', medicalHistory: '' }; this.showPatientModal = true; },
-                async savePatient() {
-                    if(!this.newPatient.name) return alert('الرجاء إدخال اسم المريض');
-                    const { collection, addDoc } = window.fbStore;
-                    const data = { ...this.newPatient, uid: this.currentUser.uid };
-                    const res = await addDoc(collection(window.db, "patients"), data);
-                    this.patients.push({ id: res.id, ...data });
-                    this.showPatientModal = false;
-                },
-                async deletePatient(id) {
-                    const { doc, deleteDoc } = window.fbStore;
-                    await deleteDoc(doc(window.db, "patients", id));
-                    this.patients = this.patients.filter(p => p.id !== id);
-                },
-
-                openAppointmentModal() { this.newApp = { patientName: '', service: '', dateTime: '' }; this.showAppointmentModal = true; },
-                async saveAppointment() {
-                    if(!this.newApp.patientName) return alert('الرجاء إدخال اسم المريض');
-                    const { collection, addDoc } = window.fbStore;
-                    const data = { ...this.newApp, uid: this.currentUser.uid };
-                    const res = await addDoc(collection(window.db, "appointments"), data);
-                    this.appointments.push({ id: res.id, ...data });
-                    this.showAppointmentModal = false;
-                },
-                async deleteAppointment(id) {
-                    const { doc, deleteDoc } = window.fbStore;
-                    await deleteDoc(doc(window.db, "appointments", id));
-                    this.appointments = this.appointments.filter(a => a.id !== id);
-                },
-
-                openFinanceModal() { this.newTx = { patientName: '', service: '', amount: '' }; this.showFinanceModal = true; },
-                async saveFinance() {
-                    if(!this.newTx.amount) return alert('الرجاء إدخال المبلغ');
-                    const { collection, addDoc } = window.fbStore;
-                    const data = { ...this.newTx, uid: this.currentUser.uid };
-                    const res = await addDoc(collection(window.db, "finances"), data);
-                    this.finances.push({ id: res.id, ...data });
-                    this.showFinanceModal = false;
-                },
-                async deleteFinance(id) {
-                    const { doc, deleteDoc } = window.fbStore;
-                    await deleteDoc(doc(window.db, "finances", id));
-                    this.finances = this.finances.filter(f => f.id !== id);
-                },
-
-                totalRevenue() {
-                    return this.finances.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+                loadingData:
