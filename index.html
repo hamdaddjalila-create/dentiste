@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عيادة الدكتور حمدادهشام لطب الأسنان - Doctor Clinic</title>
+    <title>تطبيق إدارة عيادة الأسنان - Doctor Clinic</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
@@ -51,14 +51,14 @@
         </div>
     </div>
 
-    <!-- Main App Layout (Hidden until Login) -->
-    <div x-show="isLoggedIn" class="flex h-screen overflow-hidden">
+    <!-- Main App Layout -->
+    <div x-show="isLoggedIn" class="flex h-screen overflow-hidden pb-16 md:pb-0">
         
-        <!-- Sidebar -->
+        <!-- Sidebar for Desktop -->
         <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
             <div>
                 <div class="p-5 text-xl font-bold border-b border-slate-800 flex items-center gap-2">
-                    <span class="text-blue-400">🦷</span> عيادة الدكتور حمداد هشام
+                    <span class="text-blue-400">🦷</span> عيادة الأسنان
                 </div>
                 <nav class="p-4 space-y-2">
                     <button @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">الرئيسية والإحصائيات</button>
@@ -77,10 +77,11 @@
         <div class="flex-1 flex flex-col overflow-y-auto">
             
             <!-- Top Navbar -->
-            <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
-                <h1 class="text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
-                <div class="flex items-center gap-3">
-                    <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold" x-text="currentUserEmail"></span>
+            <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 md:px-6">
+                <h1 class="text-base md:text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
+                <div class="flex items-center gap-2 md:gap-3">
+                    <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs md:text-sm font-semibold" x-text="currentUserEmail"></span>
+                    <button @click="logout()" class="md:hidden text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">خروج</button>
                 </div>
             </header>
 
@@ -90,61 +91,61 @@
             </div>
 
             <!-- Dynamic Views -->
-            <main class="p-6" x-show="!loadingData">
+            <main class="p-4 md:p-6" x-show="!loadingData">
                 
                 <!-- 1. Dashboard View -->
                 <div x-show="currentTab === 'dashboard'" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 font-medium">إجمالي المرضى</p>
-                                <h3 class="text-2xl font-bold mt-1 text-slate-800" x-text="patients.length"></h3>
+                                <p class="text-xs md:text-sm text-gray-500 font-medium">إجمالي المرضى</p>
+                                <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800" x-text="patients.length"></h3>
                             </div>
-                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">👥</div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-lg md:text-xl">👥</div>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                        <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 font-medium">مواعيد اليوم</p>
-                                <h3 class="text-2xl font-bold mt-1 text-slate-800" x-text="appointments.length"></h3>
+                                <p class="text-xs md:text-sm text-gray-500 font-medium">مواعيد اليوم</p>
+                                <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800" x-text="appointments.length"></h3>
                             </div>
-                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl">📅</div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg md:text-xl">📅</div>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                        <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-500 font-medium">إجمالي الإيرادات</p>
-                                <h3 class="text-2xl font-bold mt-1 text-slate-800" x-text="totalRevenue() + ' ر.س'"></h3>
+                                <p class="text-xs md:text-sm text-gray-500 font-medium">إجمالي الإيرادات</p>
+                                <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800" x-text="totalRevenue() + ' ر.س'"></h3>
                             </div>
-                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-xl">💰</div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-lg md:text-xl">💰</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. Patients View -->
-                <div x-show="currentTab === 'patients'" class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-slate-800">قائمة المرضى والسجلات الطبية</h2>
-                        <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">+ إضافة مريض جديد</button>
+                <div x-show="currentTab === 'patients'" class="space-y-4 md:space-y-6">
+                    <div class="flex justify-between items-center gap-2">
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">قائمة المرضى والسجلات</h2>
+                        <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ إضافة مريض</button>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <table class="w-full text-right border-collapse">
+                    <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse min-w-[500px]">
                             <thead>
-                                <tr class="bg-slate-50 border-b text-slate-600 text-sm">
-                                    <th class="p-4">اسم المريض</th>
-                                    <th class="p-4">رقم الهاتف</th>
-                                    <th class="p-4">العمر</th>
-                                    <th class="p-4">التاريخ الطبي/ملاحظات</th>
-                                    <th class="p-4 text-center">الإجراءات</th>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
+                                    <th class="p-3 md:p-4">اسم المريض</th>
+                                    <th class="p-3 md:p-4">رقم الهاتف</th>
+                                    <th class="p-3 md:p-4">العمر</th>
+                                    <th class="p-3 md:p-4">الملاحظات الطبية</th>
+                                    <th class="p-3 md:p-4 text-center">إجراء</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y text-sm">
+                            <tbody class="divide-y text-xs md:text-sm">
                                 <template x-for="patient in patients" :key="patient.id">
                                     <tr>
-                                        <td class="p-4 font-semibold text-slate-800" x-text="patient.name"></td>
-                                        <td class="p-4 text-gray-600" x-text="patient.phone"></td>
-                                        <td class="p-4 text-gray-600" x-text="patient.age"></td>
-                                        <td class="p-4 text-red-600 font-medium" x-text="patient.medicalHistory || 'لا يوجد'"></td>
-                                        <td class="p-4 text-center">
+                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="patient.name"></td>
+                                        <td class="p-3 md:p-4 text-gray-600" x-text="patient.phone"></td>
+                                        <td class="p-3 md:p-4 text-gray-600" x-text="patient.age"></td>
+                                        <td class="p-3 md:p-4 text-red-600 font-medium" x-text="patient.medicalHistory || 'لا يوجد'"></td>
+                                        <td class="p-3 md:p-4 text-center">
                                             <button @click="deletePatient(patient.id)" class="text-red-500 hover:text-red-700 font-semibold">حذف</button>
                                         </td>
                                     </tr>
@@ -158,30 +159,30 @@
                 </div>
 
                 <!-- 3. Appointments View -->
-                <div x-show="currentTab === 'appointments'" class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-slate-800">جدول المواعيد اليومية</h2>
-                        <button @click="openAppointmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">+ حجز موعد جديد</button>
+                <div x-show="currentTab === 'appointments'" class="space-y-4 md:space-y-6">
+                    <div class="flex justify-between items-center gap-2">
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">جدول المواعيد اليومية</h2>
+                        <button @click="openAppointmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ حجز موعد</button>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <table class="w-full text-right border-collapse">
+                    <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse min-w-[500px]">
                             <thead>
-                                <tr class="bg-slate-50 border-b text-slate-600 text-sm">
-                                    <th class="p-4">اسم المريض</th>
-                                    <th class="p-4">نوع الإجراء</th>
-                                    <th class="p-4">التاريخ والوقت</th>
-                                    <th class="p-4 text-center">الإجراءات</th>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
+                                    <th class="p-3 md:p-4">اسم المريض</th>
+                                    <th class="p-3 md:p-4">نوع الإجراء</th>
+                                    <th class="p-3 md:p-4">التاريخ والوقت</th>
+                                    <th class="p-3 md:p-4 text-center">إجراء</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y text-sm">
+                            <tbody class="divide-y text-xs md:text-sm">
                                 <template x-for="app in appointments" :key="app.id">
                                     <tr>
-                                        <td class="p-4 font-semibold text-slate-800" x-text="app.patientName"></td>
-                                        <td class="p-4 text-gray-600" x-text="app.service"></td>
-                                        <td class="p-4 text-gray-600" x-text="app.dateTime"></td>
-                                        <td class="p-4 text-center">
-                                            <button @click="deleteAppointment(app.id)" class="text-red-500 hover:text-red-700 font-semibold">إلغاء الموعد</button>
+                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="app.patientName"></td>
+                                        <td class="p-3 md:p-4 text-gray-600" x-text="app.service"></td>
+                                        <td class="p-3 md:p-4 text-gray-600" x-text="app.dateTime"></td>
+                                        <td class="p-3 md:p-4 text-center">
+                                            <button @click="deleteAppointment(app.id)" class="text-red-500 hover:text-red-700 font-semibold">إلغاء</button>
                                         </td>
                                     </tr>
                                 </template>
@@ -194,29 +195,29 @@
                 </div>
 
                 <!-- 4. Finance View -->
-                <div x-show="currentTab === 'finance'" class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-slate-800">سجل الإيرادات والمالية</h2>
-                        <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">+ تسجيل دفعة مالية</button>
+                <div x-show="currentTab === 'finance'" class="space-y-4 md:space-y-6">
+                    <div class="flex justify-between items-center gap-2">
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">سجل الإيرادات والمالية</h2>
+                        <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ تسجيل دفعة</button>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <table class="w-full text-right border-collapse">
+                    <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-right border-collapse min-w-[500px]">
                             <thead>
-                                <tr class="bg-slate-50 border-b text-slate-600 text-sm">
-                                    <th class="p-4">اسم المريض</th>
-                                    <th class="p-4">الخدمة المقدمة</th>
-                                    <th class="p-4">المبلغ (ر.س)</th>
-                                    <th class="p-4 text-center">الإجراء</th>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
+                                    <th class="p-3 md:p-4">اسم المريض</th>
+                                    <th class="p-3 md:p-4">الخدمة المقدمة</th>
+                                    <th class="p-3 md:p-4">المبلغ (ر.س)</th>
+                                    <th class="p-3 md:p-4 text-center">إجراء</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y text-sm">
+                            <tbody class="divide-y text-xs md:text-sm">
                                 <template x-for="tx in finances" :key="tx.id">
                                     <tr>
-                                        <td class="p-4 font-semibold text-slate-800" x-text="tx.patientName"></td>
-                                        <td class="p-4 text-gray-600" x-text="tx.service"></td>
-                                        <td class="p-4 font-bold text-emerald-600" x-text="tx.amount"></td>
-                                        <td class="p-4 text-center">
+                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="tx.patientName"></td>
+                                        <td class="p-3 md:p-4 text-gray-600" x-text="tx.service"></td>
+                                        <td class="p-3 md:p-4 font-bold text-emerald-600" x-text="tx.amount"></td>
+                                        <td class="p-3 md:p-4 text-center">
                                             <button @click="deleteFinance(tx.id)" class="text-red-500 hover:text-red-700 font-semibold">حذف</button>
                                         </td>
                                     </tr>
@@ -230,6 +231,26 @@
                 </div>
 
             </main>
+        </div>
+
+        <!-- Mobile Bottom Navigation Bar -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white flex justify-around p-2 border-t border-slate-800 z-40 text-center text-xs">
+            <button @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>📊</span>
+                <span>الرئيسية</span>
+            </button>
+            <button @click="currentTab = 'patients'" :class="currentTab === 'patients' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>👥</span>
+                <span>المرضى</span>
+            </button>
+            <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>📅</span>
+                <span>المواعيد</span>
+            </button>
+            <button @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>💰</span>
+                <span>المالية</span>
+            </button>
         </div>
     </div>
 
@@ -276,16 +297,15 @@
 
     <!-- Firebase Initialization Script -->
     <script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBXmd7pjdj7hyuhhSyTK7_gTufkCjf52dc",
-  authDomain: "dentist-app-f2751.firebaseapp.com",
-  projectId: "dentist-app-f2751",
-  storageBucket: "dentist-app-f2751.firebasestorage.app",
-  messagingSenderId: "74767532187",
-  appId: "1:74767532187:web:abbcadb5c52c41a006863e",
-  measurementId: "G-0NSRW400TN"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyBXmd7pjdj7hyuhhSyTK7_gTufkCjf52dc",
+            authDomain: "dentist-app-f2751.firebaseapp.com",
+            projectId: "dentist-app-f2751",
+            storageBucket: "dentist-app-f2751.firebasestorage.app",
+            messagingSenderId: "74767532187",
+            appId: "1:74767532187:web:abbcadb5c52c41a006863e",
+            measurementId: "G-0NSRW400TN"
+        };
 
         firebase.initializeApp(firebaseConfig);
         window.auth = firebase.auth();
