@@ -10,8 +10,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- SheetJS CDN (تصدير ملفات Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Google Fonts (Cairo) -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts (Cairo & Amiri) -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Firebase App & Services Scripts (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -20,16 +20,25 @@
 
     <style>
         body { font-family: 'Cairo', sans-serif; }
+        
+        /* CSS الخاص بالطباعة لإظهار الوصفة بشكل دقيق 100% */
         @media print {
-            body * { visibility: hidden; }
-            #printable-prescription, #printable-prescription * { visibility: visible; }
-            #printable-prescription { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-                height: 100%; 
-                padding: 30px; 
+            body * {
+                visibility: hidden !important;
+            }
+            #printable-prescription, #printable-prescription * {
+                visibility: visible !important;
+            }
+            #printable-prescription {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                padding: 40px !important;
+                background: white !important;
+                z-index: 999999 !important;
+                display: block !important;
             }
         }
     </style>
@@ -379,40 +388,39 @@
     </div>
 
     <!-- Custom Algerian Style Prescription Template For Printing (Matching image_40b626.png) -->
-    <div id="printable-prescription" class="hidden bg-white text-black font-sans leading-normal">
-        <!-- Algerian Top Header Standard -->
-        <div class="border-b-2 border-black pb-3 mb-4 flex justify-between items-start">
-            <div>
-                <h1 class="text-xl font-extrabold text-slate-900">الحكيمة شمامي جراحة أسنان</h1>
-                <h2 class="text-lg font-bold italic tracking-wide text-slate-800">Dr. CHAMMAMI</h2>
-                <p class="text-xs font-bold text-gray-700">Chirurgien Dentiste</p>
-                <p class="text-[11px] text-gray-600 mt-1">العنوان: الجزائر العاصمة | Rue Principale - Alger</p>
+    <div id="printable-prescription" dir="rtl" style="display:none;">
+        <div style="border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="text-align: right;">
+                <h1 style="font-size: 20px; font-weight: bold; margin: 0; font-family: 'Amiri', serif;">الحكيمة شمامي جراحة أسنان</h1>
+                <h2 style="font-size: 18px; font-weight: bold; margin: 2px 0; font-style: italic;">Dr. CHAMMAMI</h2>
+                <p style="font-size: 12px; font-weight: bold; margin: 0; color: #333;">Chirurgien Dentiste</p>
+                <p style="font-size: 11px; margin-top: 4px; color: #555;">العنوان: الجزائر العاصمة | Rue Principale - Alger</p>
             </div>
-            <div class="text-left text-xs font-semibold text-gray-800 space-y-1">
-                <p>بتاريخ: <span class="font-bold border-b border-black px-2" x-text="new Date().toLocaleDateString('fr-FR')"></span></p>
-                <p>المريض (ة): <span class="font-bold border-b border-black px-2" x-text="selectedPatientForRx ? selectedPatientForRx.name : '...................'"></span></p>
+            <div style="text-align: left; font-size: 13px; line-height: 1.8;">
+                <p style="margin: 0;">بتاريخ: <span style="font-weight: bold; border-bottom: 1px solid #000; padding: 0 8px;" x-text="new Date().toLocaleDateString('fr-FR')"></span></p>
+                <p style="margin: 0;">المريض (ة): <span style="font-weight: bold; border-bottom: 1px solid #000; padding: 0 8px;" x-text="selectedPatientForRx ? selectedPatientForRx.name : '...................'"></span></p>
             </div>
         </div>
 
         <!-- Center Title -->
-        <div class="text-center my-6">
-            <h2 class="text-2xl font-extrabold tracking-widest uppercase border-b-2 border-black inline-block px-4 pb-0.5">ORDONNANCE</h2>
+        <div style="text-align: center; margin: 25px 0;">
+            <h2 style="font-size: 22px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; border-bottom: 2px solid #000; display: inline-block; padding-bottom: 2px; margin: 0;">ORDONNANCE</h2>
         </div>
 
         <!-- Prescription Body -->
-        <div class="my-6 min-h-[400px] px-2">
-            <pre class="font-sans text-base leading-loose whitespace-pre-wrap font-semibold" x-text="prescriptionText"></pre>
+        <div style="margin: 25px 0; min-height: 380px; font-size: 16px; line-height: 2.2; font-weight: 600;">
+            <pre style="font-family: 'Amiri', 'Cairo', sans-serif; font-size: 17px; white-space: pre-wrap; margin: 0;" x-text="prescriptionText"></pre>
         </div>
 
         <!-- Footer Notice & Stamp -->
-        <div class="mt-8 pt-4 border-t border-black flex justify-between items-end">
-            <div class="text-xs font-bold text-emerald-800">
-                <p class="mb-1">🌟 مع تمنياتنا لكم بالشفاء العاجل</p>
-                <p class="text-[10px] text-gray-500 font-normal">لا تتناول الأدوية دون استشارة الطبيب</p>
+        <div style="margin-top: 30px; pt: 15px; border-top: 1px solid #000; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="font-size: 12px; font-weight: bold; color: #065f46;">
+                <p style="margin: 0 0 4px 0;">🌟 مع تمنياتنا لكم بالشفاء العاجل</p>
+                <p style="font-size: 10px; color: #666; font-weight: normal; margin: 0;">لا تتناول الأدوية دون استشارة الطبيب</p>
             </div>
-            <div class="text-center w-48">
-                <p class="text-xs font-bold text-gray-700 mb-8">توقيع وخاتم الطبيب</p>
-                <p class="text-[9px] text-gray-400">...............................................</p>
+            <div style="text-align: center; width: 200px;">
+                <p style="font-size: 12px; font-weight: bold; margin: 0 0 50px 0;">توقيع وخاتم الطبيب</p>
+                <p style="font-size: 9px; color: #aaa; margin: 0;">...............................................</p>
             </div>
         </div>
     </div>
