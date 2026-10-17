@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- SheetJS CDN (تصدير ملفات Excel) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Google Fonts (Cairo) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -21,7 +23,14 @@
         @media print {
             body * { visibility: hidden; }
             #printable-prescription, #printable-prescription * { visibility: visible; }
-            #printable-prescription { position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding: 20px; }
+            #printable-prescription { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                height: 100%; 
+                padding: 30px; 
+            }
         }
     </style>
 </head>
@@ -137,7 +146,10 @@
                 <div x-show="currentTab === 'patients'" class="space-y-4 md:space-y-6">
                     <div class="flex justify-between items-center gap-2">
                         <h2 class="text-base md:text-xl font-bold text-slate-800">قائمة المرضى والسجلات الطبية</h2>
-                        <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ إضافة مريض جديد</button>
+                        <div class="flex gap-2">
+                            <button @click="exportPatientsExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-1">📊 تصدير Excel</button>
+                            <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ إضافة مريض</button>
+                        </div>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
@@ -157,7 +169,7 @@
                                     <tr>
                                         <td class="p-3 md:p-4">
                                             <div class="font-semibold text-slate-800" x-text="patient.name"></div>
-                                            <div class="text-xs text-gray-400" x-text="patient.medicalHistory || 'لا يوجد ملاجظات'"></div>
+                                            <div class="text-xs text-gray-400" x-text="patient.medicalHistory || 'لا يوجد ملاحظات'"></div>
                                         </td>
                                         <td class="p-3 md:p-4 text-gray-600">
                                             <div x-text="patient.phone || 'بدون هاتف'"></div>
@@ -233,7 +245,10 @@
                 <div x-show="currentTab === 'finance'" class="space-y-4 md:space-y-6">
                     <div class="flex justify-between items-center gap-2">
                         <h2 class="text-base md:text-xl font-bold text-slate-800">سجل الإيرادات والمالية</h2>
-                        <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ تسجيل دفعة مالية</button>
+                        <div class="flex gap-2">
+                            <button @click="exportFinanceExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-1">📊 تصدير Excel</button>
+                            <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ تسجيل دفعة مالية</button>
+                        </div>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
@@ -289,7 +304,7 @@
         </div>
     </div>
 
-    <!-- Modal 1: Add/Edit Patient (With Debt & X-Ray) -->
+    <!-- Modal 1: Add/Edit Patient -->
     <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-800" x-text="isEditMode ? 'تعديل بيانات المريض' : 'إضافة مريض جديد وتسجيل الدفعات'"></h3>
@@ -327,15 +342,23 @@
         </div>
     </div>
 
-    <!-- Modal 2: Prescription / Ordonnance -->
+    <!-- Modal 2: Prescription / Ordonnance with Quick Drug Presets -->
     <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-800">تحرير وصفة طبية (Ordonnance)</h3>
             <p class="text-xs text-gray-500">المريض: <span class="font-bold text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
             
-            <textarea x-model="prescriptionText" rows="7" placeholder="اكتب الأدوية هنا... مثال:
-1. Augmentin 1g - حبة مرتين في اليوم بعد الأكل (لمدة 7 أيام)
-2. Doliprane 1g - حبة عند الحاجة عند الألم" class="w-full border p-3 rounded-xl text-sm font-mono leading-relaxed"></textarea>
+            <!-- Quick Dental Drugs Buttons -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1.5">⚡ إضافة دواء بنقرة واحدة:</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="drug in quickDrugs" :key="drug.name">
+                        <button @click="addDrugToPrescription(drug)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-2.5 py-1 rounded-lg text-xs border border-slate-300 font-semibold transition">+ <span x-text="drug.name"></span></button>
+                    </template>
+                </div>
+            </div>
+
+            <textarea x-model="prescriptionText" rows="7" placeholder="اكتب الأدوية والتعليمات هنا..." class="w-full border p-3 rounded-xl text-sm font-mono leading-relaxed"></textarea>
             
             <div class="flex justify-between items-center pt-2">
                 <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
@@ -355,38 +378,41 @@
         </div>
     </div>
 
-    <!-- Custom Prescription Template For Printing -->
-    <div id="printable-prescription" class="hidden p-8 bg-white text-black font-sans">
-        <!-- Top Header -->
-        <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-center">
+    <!-- Custom Algerian Style Prescription Template For Printing (Matching image_40b626.png) -->
+    <div id="printable-prescription" class="hidden bg-white text-black font-sans leading-normal">
+        <!-- Algerian Top Header Standard -->
+        <div class="border-b-2 border-black pb-3 mb-4 flex justify-between items-start">
             <div>
-                <h1 class="text-2xl font-extrabold text-slate-900">عيادة الدكتورة شمامي لطب الأسنان</h1>
-                <p class="text-sm font-bold text-gray-700 mt-1">Chammami Dental Clinic</p>
-                <p class="text-xs text-gray-500 mt-1">العنوان: الجزائر | الهاتف: 0550000000</p>
+                <h1 class="text-xl font-extrabold text-slate-900">الحكيمة شمامي جراحة أسنان</h1>
+                <h2 class="text-lg font-bold italic tracking-wide text-slate-800">Dr. CHAMMAMI</h2>
+                <p class="text-xs font-bold text-gray-700">Chirurgien Dentiste</p>
+                <p class="text-[11px] text-gray-600 mt-1">العنوان: الجزائر العاصمة | Rue Principale - Alger</p>
             </div>
-            <div class="text-5xl">🦷</div>
+            <div class="text-left text-xs font-semibold text-gray-800 space-y-1">
+                <p>بتاريخ: <span class="font-bold border-b border-black px-2" x-text="new Date().toLocaleDateString('fr-FR')"></span></p>
+                <p>المريض (ة): <span class="font-bold border-b border-black px-2" x-text="selectedPatientForRx ? selectedPatientForRx.name : '...................'"></span></p>
+            </div>
         </div>
 
-        <!-- Patient Details & Date -->
-        <div class="flex justify-between text-sm mb-8 font-semibold border-b pb-3">
-            <p>اسم المريض: <span class="font-bold underline" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
-            <p>التاريخ: <span x-text="new Date().toLocaleDateString('ar-DZ')"></span></p>
+        <!-- Center Title -->
+        <div class="text-center my-6">
+            <h2 class="text-2xl font-extrabold tracking-widest uppercase border-b-2 border-black inline-block px-4 pb-0.5">ORDONNANCE</h2>
         </div>
 
         <!-- Prescription Body -->
-        <div class="my-8 min-h-[350px]">
-            <h3 class="font-bold text-base mb-4 text-slate-800 border-b pb-1 inline-block">الوصفة الطبية (Ordonnance):</h3>
-            <pre class="font-sans text-base leading-loose whitespace-pre-wrap pl-4" x-text="prescriptionText"></pre>
+        <div class="my-6 min-h-[400px] px-2">
+            <pre class="font-sans text-base leading-loose whitespace-pre-wrap font-semibold" x-text="prescriptionText"></pre>
         </div>
 
-        <!-- Footer -->
-        <div class="mt-12 pt-6 border-t-2 border-slate-900 flex justify-between items-end">
-            <div>
-                <p class="text-sm font-bold text-emerald-700">مع تمنياتنا لكم بالشفاء العاجل 🌟</p>
+        <!-- Footer Notice & Stamp -->
+        <div class="mt-8 pt-4 border-t border-black flex justify-between items-end">
+            <div class="text-xs font-bold text-emerald-800">
+                <p class="mb-1">🌟 مع تمنياتنا لكم بالشفاء العاجل</p>
+                <p class="text-[10px] text-gray-500 font-normal">لا تتناول الأدوية دون استشارة الطبيب</p>
             </div>
-            <div class="text-center">
-                <p class="text-xs font-semibold text-gray-600 mb-8">خاتم وتوقيع الدكتورة</p>
-                <p class="text-[10px] text-gray-400">................................................</p>
+            <div class="text-center w-48">
+                <p class="text-xs font-bold text-gray-700 mb-8">توقيع وخاتم الطبيب</p>
+                <p class="text-[9px] text-gray-400">...............................................</p>
             </div>
         </div>
     </div>
@@ -467,6 +493,15 @@
                 prescriptionText: '',
                 currentXrayUrl: '',
 
+                quickDrugs: [
+                    { name: 'Augmentin 1g', dose: '1g - قرص مرتين في اليوم بعد الأكل (7 أيام)' },
+                    { name: 'Amoxil 500mg', dose: '500mg - كبسولة 3 مرات في اليوم' },
+                    { name: 'Doliprane 1g', dose: '1g - قرص عند الحاجة كل 6 ساعات' },
+                    { name: 'Flagyl 500mg', dose: '500mg - قرص 3 مرات في اليوم مع الأكل' },
+                    { name: 'Profenid 100mg', dose: '100mg - قرص مرتين في اليوم بعد الأكل' },
+                    { name: 'Spidifen 400mg', dose: '400mg - كيس 3 مرات في اليوم' }
+                ],
+
                 newPatient: { name: '', phone: '', age: '', medicalHistory: '', totalCost: '', paidAmount: '', xrayUrl: '' },
                 newApp: { patientName: '', service: '', dateTime: '' },
                 newTx: { patientName: '', service: '', amount: '' },
@@ -538,6 +573,34 @@
                     if (this.currentTab === 'finance') return 'الحسابات والمالية';
                 },
 
+                exportPatientsExcel() {
+                    const data = this.patients.map(p => ({
+                        'اسم المريض': p.name,
+                        'الهاتف': p.phone || '',
+                        'العمر': p.age || '',
+                        'المبلغ الإجمالي (د.ج)': p.totalCost || 0,
+                        'المبلغ المدفوع (د.ج)': p.paidAmount || 0,
+                        'المتبقي/الدين (د.ج)': (p.totalCost || 0) - (p.paidAmount || 0),
+                        'ملاحظات طبية': p.medicalHistory || ''
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "المرضى");
+                    XLSX.writeFile(wb, "قائمة_المرضى_عيادة_الدكتورة_شمامي.xlsx");
+                },
+
+                exportFinanceExcel() {
+                    const data = this.finances.map(f => ({
+                        'اسم المريض': f.patientName,
+                        'الخدمة المقدمة': f.service,
+                        'المبلغ (د.ج)': f.amount
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "المالية");
+                    XLSX.writeFile(wb, "سجل_المالية_عيادة_الدكتورة_شمامي.xlsx");
+                },
+
                 openPatientModal() { 
                     this.isEditMode = false;
                     this.editingPatientId = null;
@@ -603,6 +666,11 @@
                     this.showPrescriptionModal = true;
                 },
 
+                addDrugToPrescription(drug) {
+                    const line = `• ${drug.name} - ${drug.dose}\n`;
+                    this.prescriptionText += line;
+                },
+
                 printPrescription() {
                     window.print();
                 },
@@ -622,34 +690,4 @@
                 },
                 async deleteAppointment(id) {
                     await window.db.collection("appointments").doc(id).delete();
-                    this.appointments = this.appointments.filter(a => a.id !== id);
-                },
-
-                openFinanceModal() { this.newTx = { patientName: '', service: '', amount: '' }; this.showFinanceModal = true; },
-                async saveFinance() {
-                    if(!this.newTx.amount) return alert('الرجاء إدخال المبلغ');
-                    const data = { ...this.newTx, uid: this.currentUser.uid };
-                    const res = await window.db.collection("finances").add(data);
-                    this.finances.push({ id: res.id, ...data });
-                    this.showFinanceModal = false;
-                },
-                async deleteFinance(id) {
-                    await window.db.collection("finances").doc(id).delete();
-                    this.finances = this.finances.filter(f => f.id !== id);
-                },
-
-                totalRevenue() {
-                    return this.finances.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-                },
-
-                totalDebts() {
-                    return this.patients.reduce((sum, item) => {
-                        const debt = (Number(item.totalCost || 0) - Number(item.paidAmount || 0));
-                        return sum + (debt > 0 ? debt : 0);
-                    }, 0);
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+                    this.
