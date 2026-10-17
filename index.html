@@ -1,9 +1,12 @@
+HTML
+
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق إدارة عيادة الأسنان - Doctor Clinic</title>
+    <title>تطبيق إدارة عيادة الأسنان - Doctor Clinic Pro</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
@@ -18,6 +21,11 @@
 
     <style>
         body { font-family: 'Cairo', sans-serif; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-prescription, #printable-prescription * { visibility: visible; }
+            #printable-prescription { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800" x-data="clinicApp()" x-init="initApp()">
@@ -95,27 +103,34 @@
                 
                 <!-- 1. Dashboard View -->
                 <div x-show="currentTab === 'dashboard'" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                        <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-xs md:text-sm text-gray-500 font-medium">إجمالي المرضى</p>
-                                <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800" x-text="patients.length"></h3>
+                                <p class="text-xs text-gray-500 font-medium">إجمالي المرضى</p>
+                                <h3 class="text-xl font-bold mt-1 text-slate-800" x-text="patients.length"></h3>
                             </div>
-                            <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-lg md:text-xl">👥</div>
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-lg">👥</div>
                         </div>
-                        <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-xs md:text-sm text-gray-500 font-medium">مواعيد اليوم</p>
-                                <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800" x-text="appointments.length"></h3>
+                                <p class="text-xs text-gray-500 font-medium">مواعيد اليوم</p>
+                                <h3 class="text-xl font-bold mt-1 text-slate-800" x-text="appointments.length"></h3>
                             </div>
-                            <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg md:text-xl">📅</div>
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg">📅</div>
                         </div>
-                        <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border flex items-center justify-between">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-xs md:text-sm text-gray-500 font-medium">إجمالي الإيرادات</p>
-                                <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800" x-text="totalRevenue() + ' ر.س'"></h3>
+                                <p class="text-xs text-gray-500 font-medium">إجمالي المداخيل</p>
+                                <h3 class="text-xl font-bold mt-1 text-emerald-600" x-text="totalRevenue() + ' د.ج'"></h3>
                             </div>
-                            <div class="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-lg md:text-xl">💰</div>
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg">💰</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium">إجمالي الديون المعلقة</p>
+                                <h3 class="text-xl font-bold mt-1 text-red-600" x-text="totalDebts() + ' د.ج'"></h3>
+                            </div>
+                            <div class="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-lg">⚠️</div>
                         </div>
                     </div>
                 </div>
@@ -128,30 +143,51 @@
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
-                        <table class="w-full text-right border-collapse min-w-[500px]">
+                        <table class="w-full text-right border-collapse min-w-[700px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
-                                    <th class="p-3 md:p-4">اسم المريض</th>
-                                    <th class="p-3 md:p-4">رقم الهاتف</th>
-                                    <th class="p-3 md:p-4">العمر</th>
-                                    <th class="p-3 md:p-4">الملاحظات الطبية</th>
-                                    <th class="p-3 md:p-4 text-center">إجراء</th>
+                                    <th class="p-3 md:p-4">المريض</th>
+                                    <th class="p-3 md:p-4">الهاتف / العمر</th>
+                                    <th class="p-3 md:p-4">المبلغ الكلي / المدفوع</th>
+                                    <th class="p-3 md:p-4">المتبقي (الدين)</th>
+                                    <th class="p-3 md:p-4">الأشعة (Panoramique)</th>
+                                    <th class="p-3 md:p-4 text-center">خيارات وطباعة</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y text-xs md:text-sm">
                                 <template x-for="patient in patients" :key="patient.id">
                                     <tr>
-                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="patient.name"></td>
-                                        <td class="p-3 md:p-4 text-gray-600" x-text="patient.phone"></td>
-                                        <td class="p-3 md:p-4 text-gray-600" x-text="patient.age"></td>
-                                        <td class="p-3 md:p-4 text-red-600 font-medium" x-text="patient.medicalHistory || 'لا يوجد'"></td>
-                                        <td class="p-3 md:p-4 text-center">
-                                            <button @click="deletePatient(patient.id)" class="text-red-500 hover:text-red-700 font-semibold">حذف</button>
+                                        <td class="p-3 md:p-4">
+                                            <div class="font-semibold text-slate-800" x-text="patient.name"></div>
+                                            <div class="text-xs text-gray-400" x-text="patient.medicalHistory"></div>
+                                        </td>
+                                        <td class="p-3 md:p-4 text-gray-600">
+                                            <div x-text="patient.phone"></div>
+                                            <div class="text-xs text-gray-400" x-text="patient.age ? patient.age + ' سنة' : ''"></div>
+                                        </td>
+                                        <td class="p-3 md:p-4 text-gray-700 font-medium">
+                                            <span x-text="(patient.totalCost || 0) + ' د.ج'"></span> / 
+                                            <span class="text-emerald-600 font-bold" x-text="(patient.paidAmount || 0) + ' د.ج'"></span>
+                                        </td>
+                                        <td class="p-3 md:p-4">
+                                            <span :class="(patient.totalCost - patient.paidAmount) > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="px-2 py-1 rounded-full text-xs font-bold" x-text="((patient.totalCost || 0) - (patient.paidAmount || 0)) + ' د.ج'"></span>
+                                        </td>
+                                        <td class="p-3 md:p-4">
+                                            <template x-if="patient.xrayUrl">
+                                                <button @click="viewXray(patient.xrayUrl)" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">🖼️ عرض الأشعة</button>
+                                            </template>
+                                            <template x-if="!patient.xrayUrl">
+                                                <span class="text-gray-400 text-xs">لا توجد</span>
+                                            </template>
+                                        </td>
+                                        <td class="p-3 md:p-4 text-center space-x-1 space-x-reverse">
+                                            <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2.5 py-1 rounded-md text-xs hover:bg-slate-700">📄 وصفة</button>
+                                            <button @click="deletePatient(patient.id)" class="text-red-500 hover:text-red-700 font-semibold px-1">حذف</button>
                                         </td>
                                     </tr>
                                 </template>
                                 <template x-if="patients.length === 0">
-                                    <tr><td colspan="5" class="p-6 text-center text-gray-400">لا يوجد مرضى مسجلين حالياً.</td></tr>
+                                    <tr><td colspan="6" class="p-6 text-center text-gray-400">لا يوجد مرضى مسجلين حالياً.</td></tr>
                                 </template>
                             </tbody>
                         </table>
@@ -198,7 +234,7 @@
                 <div x-show="currentTab === 'finance'" class="space-y-4 md:space-y-6">
                     <div class="flex justify-between items-center gap-2">
                         <h2 class="text-base md:text-xl font-bold text-slate-800">سجل الإيرادات والمالية</h2>
-                        <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ تسجيل دفعة</button>
+                        <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ تسجيل دفعة مالية</button>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
@@ -207,7 +243,7 @@
                                 <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
                                     <th class="p-3 md:p-4">اسم المريض</th>
                                     <th class="p-3 md:p-4">الخدمة المقدمة</th>
-                                    <th class="p-3 md:p-4">المبلغ (ر.س)</th>
+                                    <th class="p-3 md:p-4">المبلغ (د.ج)</th>
                                     <th class="p-3 md:p-4 text-center">إجراء</th>
                                 </tr>
                             </thead>
@@ -254,21 +290,91 @@
         </div>
     </div>
 
-    <!-- Modals -->
-    <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <!-- Modal 1: Add Patient (With Debt & X-Ray) -->
+    <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-slate-800">إضافة مريض جديد</h3>
-            <input type="text" x-model="newPatient.name" placeholder="اسم المريض" class="w-full border p-2.5 rounded-lg text-sm">
-            <input type="text" x-model="newPatient.phone" placeholder="رقم الهاتف" class="w-full border p-2.5 rounded-lg text-sm">
-            <input type="number" x-model="newPatient.age" placeholder="العمر" class="w-full border p-2.5 rounded-lg text-sm">
-            <textarea x-model="newPatient.medicalHistory" placeholder="التاريخ الطبي / الحساسية / أمراض مزمنة" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+            <h3 class="text-lg font-bold text-slate-800">إضافة مريض وتسجيل خطة الدفع</h3>
+            <input type="text" x-model="newPatient.name" placeholder="اسم المريض بالكامل" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" x-model="newPatient.phone" placeholder="رقم الهاتف" class="w-full border p-2.5 rounded-lg text-sm">
+                <input type="number" x-model="newPatient.age" placeholder="العمر" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            
+            <div class="border-t pt-2 space-y-2">
+                <label class="block text-xs font-semibold text-slate-700">خطة الدفع والمالية (د.ج):</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" x-model="newPatient.totalCost" placeholder="المبلغ الإجمالي للعلاج" class="w-full border p-2.5 rounded-lg text-sm">
+                    <input type="number" x-model="newPatient.paidAmount" placeholder="الدفعة الأولى" class="w-full border p-2.5 rounded-lg text-sm">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">رفع صورة الأشعة (Panoramique):</label>
+                <input type="file" @change="handleXrayUpload($event)" accept="image/*" class="w-full border p-2 rounded-lg text-xs">
+            </div>
+
+            <textarea x-model="newPatient.medicalHistory" placeholder="التاريخ الطبي / الحساسية / الملاحظات" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+            
             <div class="flex justify-end gap-2 pt-2">
                 <button @click="showPatientModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
-                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ</button>
+                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ المريض</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal 2: Prescription / Ordonnance -->
+    <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">إنشاء وصفة طبية (Ordonnance)</h3>
+            <p class="text-xs text-gray-500">المريض: <span class="font-bold text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
+            
+            <textarea x-model="prescriptionText" rows="6" placeholder="اكتب الأدوية هنا... مثال:
+1. Augmentin 1g - (مرتين في اليوم بعد الأكل)
+2. Doliprane 1g - (عند الحاجة)" class="w-full border p-3 rounded-xl text-sm font-mono"></textarea>
+            
+            <div class="flex justify-between items-center pt-2">
+                <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
+                <button @click="printPrescription()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
+                    🖨️ طباعة / حفظ PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View X-Ray Modal -->
+    <div x-show="showXrayModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-2xl w-full p-4 text-center space-y-4">
+            <h3 class="text-lg font-bold">صورة الأشعة الطبية (Panoramique)</h3>
+            <img :src="currentXrayUrl" class="max-h-[70vh] mx-auto rounded-lg shadow-md border">
+            <button @click="showXrayModal = false" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-sm">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- Hidden Printable Prescription Template -->
+    <div id="printable-prescription" class="hidden p-8 bg-white text-black font-sans">
+        <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">عيادة لطب وجراحة الأسنان</h1>
+                <p class="text-sm text-gray-600">الدكتور / دكتورة العيادة</p>
+                <p class="text-xs text-gray-500">الهاتف: 0550000000 | العنوان: الجزائر العاصمة</p>
+            </div>
+            <div class="text-4xl">🦷</div>
+        </div>
+        <div class="flex justify-between text-sm mb-8 font-semibold">
+            <p>اسم المريض: <span x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
+            <p>التاريخ: <span x-text="new Date().toLocaleDateString('ar-DZ')"></span></p>
+        </div>
+        <div class="my-8 min-h-[300px]">
+            <h3 class="font-bold border-b text-md mb-4 pb-1">الوصفة الطبية (Ordonnance):</h3>
+            <pre class="font-sans text-base leading-relaxed whitespace-pre-wrap" x-text="prescriptionText"></pre>
+        </div>
+        <div class="mt-12 pt-8 border-t flex justify-between text-xs text-gray-500">
+            <p>خاتم وتوقيع الطبيب</p>
+            <p>نتمنى لكم الشفاء العاجل</p>
+        </div>
+    </div>
+
+    <!-- Modal: Appointments -->
     <div x-show="showAppointmentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-800">حجز موعد جديد</h3>
@@ -282,12 +388,13 @@
         </div>
     </div>
 
+    <!-- Modal: Finance -->
     <div x-show="showFinanceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-800">تسجيل معاملة مالية</h3>
             <input type="text" x-model="newTx.patientName" placeholder="اسم المريض" class="w-full border p-2.5 rounded-lg text-sm">
             <input type="text" x-model="newTx.service" placeholder="الخدمة المقدمة" class="w-full border p-2.5 rounded-lg text-sm">
-            <input type="number" x-model="newTx.amount" placeholder="المبلغ (ر.س)" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="number" x-model="newTx.amount" placeholder="المبلغ (د.ج)" class="w-full border p-2.5 rounded-lg text-sm">
             <div class="flex justify-end gap-2 pt-2">
                 <button @click="showFinanceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
                 <button @click="saveFinance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ الدفعة</button>
@@ -330,12 +437,18 @@
                 showPatientModal: false,
                 showAppointmentModal: false,
                 showFinanceModal: false,
+                showPrescriptionModal: false,
+                showXrayModal: false,
 
                 patients: [],
                 appointments: [],
                 finances: [],
 
-                newPatient: { name: '', phone: '', age: '', medicalHistory: '' },
+                selectedPatientForRx: null,
+                prescriptionText: '',
+                currentXrayUrl: '',
+
+                newPatient: { name: '', phone: '', age: '', medicalHistory: '', totalCost: '', paidAmount: '', xrayUrl: '' },
                 newApp: { patientName: '', service: '', dateTime: '' },
                 newTx: { patientName: '', service: '', amount: '' },
 
@@ -367,8 +480,6 @@
                         console.error("Firebase Login Error:", e);
                         if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-email') {
                             this.authError = 'خطأ في بيانات الدخول! تأكد من الإيميل وكلمة السر.';
-                        } else if (e.code === 'auth/user-disabled') {
-                            this.authError = 'تم تعطيل هذا الحساب من الإدارة.';
                         } else {
                             this.authError = 'خطأ في الاتصال بالخادم: ' + e.message;
                         }
@@ -386,16 +497,12 @@
                     this.loadingData = true;
                     try {
                         const uid = this.currentUser.uid;
-
-                        // جلب المرضى الخاصين بالطبيب فقط
                         const pSnap = await window.db.collection("patients").where("uid", "==", uid).get();
                         this.patients = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                        // جلب المواعيد
                         const aSnap = await window.db.collection("appointments").where("uid", "==", uid).get();
                         this.appointments = aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                        // جلب الحسابات
                         const fSnap = await window.db.collection("finances").where("uid", "==", uid).get();
                         this.finances = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     } catch (e) {
@@ -412,17 +519,67 @@
                     if (this.currentTab === 'finance') return 'الحسابات والمالية';
                 },
 
-                openPatientModal() { this.newPatient = { name: '', phone: '', age: '', medicalHistory: '' }; this.showPatientModal = true; },
+                openPatientModal() { 
+                    this.newPatient = { name: '', phone: '', age: '', medicalHistory: '', totalCost: '', paidAmount: '', xrayUrl: '' }; 
+                    this.showPatientModal = true; 
+                },
+
+                handleXrayUpload(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.newPatient.xrayUrl = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+
                 async savePatient() {
                     if(!this.newPatient.name) return alert('الرجاء إدخال اسم المريض');
-                    const data = { ...this.newPatient, uid: this.currentUser.uid };
+                    const data = { 
+                        ...this.newPatient, 
+                        totalCost: Number(this.newPatient.totalCost || 0),
+                        paidAmount: Number(this.newPatient.paidAmount || 0),
+                        uid: this.currentUser.uid 
+                    };
                     const res = await window.db.collection("patients").add(data);
+                    
+                    // إذا كان هناك دفعة أولية، يتم تسجيلها تلقائياً في السجل المالي
+                    if(data.paidAmount > 0) {
+                        await window.db.collection("finances").add({
+                            patientName: data.name,
+                            service: 'دفعة علاج أولية',
+                            amount: data.paidAmount,
+                            uid: this.currentUser.uid
+                        });
+                    }
+
                     this.patients.push({ id: res.id, ...data });
                     this.showPatientModal = false;
+                    this.loadCloudData();
                 },
+
                 async deletePatient(id) {
-                    await window.db.collection("patients").doc(id).delete();
-                    this.patients = this.patients.filter(p => p.id !== id);
+                    if(confirm("هل أنت تأكد من حذف هذا المريض؟")) {
+                        await window.db.collection("patients").doc(id).delete();
+                        this.patients = this.patients.filter(p => p.id !== id);
+                    }
+                },
+
+                openPrescriptionModal(patient) {
+                    this.selectedPatientForRx = patient;
+                    this.prescriptionText = '';
+                    this.showPrescriptionModal = true;
+                },
+
+                printPrescription() {
+                    window.print();
+                },
+
+                viewXray(url) {
+                    this.currentXrayUrl = url;
+                    this.showXrayModal = true;
                 },
 
                 openAppointmentModal() { this.newApp = { patientName: '', service: '', dateTime: '' }; this.showAppointmentModal = true; },
@@ -453,6 +610,13 @@
 
                 totalRevenue() {
                     return this.finances.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+                },
+
+                totalDebts() {
+                    return this.patients.reduce((sum, item) => {
+                        const debt = (Number(item.totalCost || 0) - Number(item.paidAmount || 0));
+                        return sum + (debt > 0 ? debt : 0);
+                    }, 0);
                 }
             }
         }
