@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عيادة طب الأسنان للدكتورة شمامي</title>
+    
+    <!-- إعدادات PWA للتحويل إلى تطبيق هاتف رصين -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="عيادة شمامي">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2818/2818366.png">
+    
+    <!-- Web App Manifest مدمج لمنع خطأ Impossible d'installer -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"عيادة طب الأسنان للدكتورة شمامي","short_name":"عيادة شمامي","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2818/2818366.png","sizes":"512x512","type":"image/png"}]}'>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
@@ -620,7 +632,6 @@
                     this.prescriptionText += line;
                 },
 
-                // طريقة الطباعة المطبقة لملاءمة ورقة واحدة فقط (Single Page A4/A5)
                 printPrescription() {
                     const patientName = this.selectedPatientForRx ? this.selectedPatientForRx.name : '...................';
                     const dateStr = new Date().toLocaleDateString('fr-FR');
