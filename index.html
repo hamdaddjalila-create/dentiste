@@ -20,27 +20,6 @@
 
     <style>
         body { font-family: 'Cairo', sans-serif; }
-        
-        /* CSS الخاص بالطباعة لإظهار الوصفة بشكل دقيق 100% */
-        @media print {
-            body * {
-                visibility: hidden !important;
-            }
-            #printable-prescription, #printable-prescription * {
-                visibility: visible !important;
-            }
-            #printable-prescription {
-                position: fixed !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                padding: 40px !important;
-                background: white !important;
-                z-index: 999999 !important;
-                display: block !important;
-            }
-        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800" x-data="clinicApp()" x-init="initApp()">
@@ -387,44 +366,6 @@
         </div>
     </div>
 
-    <!-- Custom Algerian Style Prescription Template For Printing (Matching image_40b626.png) -->
-    <div id="printable-prescription" dir="rtl" style="display:none;">
-        <div style="border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="text-align: right;">
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; font-family: 'Amiri', serif;">الحكيمة شمامي جراحة أسنان</h1>
-                <h2 style="font-size: 18px; font-weight: bold; margin: 2px 0; font-style: italic;">Dr. CHAMMAMI</h2>
-                <p style="font-size: 12px; font-weight: bold; margin: 0; color: #333;">Chirurgien Dentiste</p>
-                <p style="font-size: 11px; margin-top: 4px; color: #555;">العنوان: الجزائر العاصمة | Rue Principale - Alger</p>
-            </div>
-            <div style="text-align: left; font-size: 13px; line-height: 1.8;">
-                <p style="margin: 0;">بتاريخ: <span style="font-weight: bold; border-bottom: 1px solid #000; padding: 0 8px;" x-text="new Date().toLocaleDateString('fr-FR')"></span></p>
-                <p style="margin: 0;">المريض (ة): <span style="font-weight: bold; border-bottom: 1px solid #000; padding: 0 8px;" x-text="selectedPatientForRx ? selectedPatientForRx.name : '...................'"></span></p>
-            </div>
-        </div>
-
-        <!-- Center Title -->
-        <div style="text-align: center; margin: 25px 0;">
-            <h2 style="font-size: 22px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; border-bottom: 2px solid #000; display: inline-block; padding-bottom: 2px; margin: 0;">ORDONNANCE</h2>
-        </div>
-
-        <!-- Prescription Body -->
-        <div style="margin: 25px 0; min-height: 380px; font-size: 16px; line-height: 2.2; font-weight: 600;">
-            <pre style="font-family: 'Amiri', 'Cairo', sans-serif; font-size: 17px; white-space: pre-wrap; margin: 0;" x-text="prescriptionText"></pre>
-        </div>
-
-        <!-- Footer Notice & Stamp -->
-        <div style="margin-top: 30px; pt: 15px; border-top: 1px solid #000; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div style="font-size: 12px; font-weight: bold; color: #065f46;">
-                <p style="margin: 0 0 4px 0;">🌟 مع تمنياتنا لكم بالشفاء العاجل</p>
-                <p style="font-size: 10px; color: #666; font-weight: normal; margin: 0;">لا تتناول الأدوية دون استشارة الطبيب</p>
-            </div>
-            <div style="text-align: center; width: 200px;">
-                <p style="font-size: 12px; font-weight: bold; margin: 0 0 50px 0;">توقيع وخاتم الطبيب</p>
-                <p style="font-size: 9px; color: #aaa; margin: 0;">...............................................</p>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal: Appointments -->
     <div x-show="showAppointmentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
@@ -679,8 +620,83 @@
                     this.prescriptionText += line;
                 },
 
+                // طريقة الطباعة المطبقة لملاءمة ورقة واحدة فقط (Single Page A4/A5)
                 printPrescription() {
-                    window.print();
+                    const patientName = this.selectedPatientForRx ? this.selectedPatientForRx.name : '...................';
+                    const dateStr = new Date().toLocaleDateString('fr-FR');
+                    const text = this.prescriptionText || '';
+
+                    const printWin = window.open('', '_blank', 'width=800,height=900');
+                    printWin.document.write(`
+                        <!DOCTYPE html>
+                        <html lang="ar" dir="rtl">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>الوصفة الطبية - ${patientName}</title>
+                            <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+                            <style>
+                                @page { size: auto; margin: 10mm; }
+                                html, body { height: 100%; margin: 0; padding: 0; background: #fff; color: #000; box-sizing: border-box; }
+                                body { font-family: 'Amiri', 'Cairo', sans-serif; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+                                .header { border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
+                                .header-right h1 { font-size: 18px; margin: 0; font-weight: bold; }
+                                .header-right h2 { font-size: 15px; margin: 1px 0; font-style: italic; }
+                                .header-right p { font-size: 11px; margin: 0; color: #333; }
+                                .header-left { text-align: left; font-size: 12px; line-height: 1.6; }
+                                .patient-line { font-weight: bold; border-bottom: 1px solid #000; padding: 0 6px; }
+                                .title-container { text-align: center; margin: 15px 0 10px 0; }
+                                .title { font-size: 20px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; border-bottom: 2px solid #000; display: inline-block; padding-bottom: 1px; margin: 0; }
+                                .content { flex-grow: 1; margin: 10px 0; font-size: 16px; line-height: 1.8; font-weight: 600; white-space: pre-wrap; }
+                                .footer { border-top: 1px solid #000; pt: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
+                                .footer-notice { font-size: 11px; font-weight: bold; color: #065f46; }
+                                .footer-notice p { margin: 0 0 2px 0; }
+                                .stamp-box { text-align: center; width: 180px; }
+                                .stamp-box p { font-size: 11px; font-weight: bold; margin: 0 0 35px 0; }
+                            </style>
+                        </head>
+                        <body>
+                            <div>
+                                <div class="header">
+                                    <div class="header-right">
+                                        <h1>الحكيمة شمامي جراحة أسنان</h1>
+                                        <h2>Dr. CHAMMAMI</h2>
+                                        <p>Chirurgien Dentiste</p>
+                                        <p style="margin-top:2px;">العنوان: الجزائر العاصمة | Rue Principale - Alger</p>
+                                    </div>
+                                    <div class="header-left">
+                                        <p>بتاريخ: <span class="patient-line">${dateStr}</span></p>
+                                        <p>المريض (ة): <span class="patient-line">${patientName}</span></p>
+                                    </div>
+                                </div>
+
+                                <div class="title-container">
+                                    <h2 class="title">ORDONNANCE</h2>
+                                </div>
+
+                                <div class="content">${text}</div>
+                            </div>
+
+                            <div class="footer">
+                                <div class="footer-notice">
+                                    <p>🌟 مع تمنياتنا لكم بالشفاء العاجل</p>
+                                    <p style="font-size:10px; color:#666; font-weight:normal;">لا تتناول الأدوية دون استشارة الطبيب</p>
+                                </div>
+                                <div class="stamp-box">
+                                    <p>توقيع وخاتم الطبيب</p>
+                                    <p style="font-size:9px; color:#aaa;">...............................................</p>
+                                </div>
+                            </div>
+
+                            <script>
+                                window.onload = function() {
+                                    window.print();
+                                    setTimeout(function() { window.close(); }, 500);
+                                };
+                            <\/script>
+                        </body>
+                        </html>
+                    `);
+                    printWin.document.close();
                 },
 
                 viewXray(url) {
