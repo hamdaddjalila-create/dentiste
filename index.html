@@ -1,15 +1,18 @@
+HTML
+
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق إدارة عيادة الأسنان - Doctor Clinic Pro</title>
+    <title>عيادة طب الأسنان للدكتورة شمامي</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Google Fonts (Cairo) -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Firebase App & Services Scripts (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -21,7 +24,7 @@
         @media print {
             body * { visibility: hidden; }
             #printable-prescription, #printable-prescription * { visibility: visible; }
-            #printable-prescription { position: absolute; left: 0; top: 0; width: 100%; }
+            #printable-prescription { position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding: 20px; }
         }
     </style>
 </head>
@@ -30,10 +33,10 @@
     <!-- Login Screen -->
     <div x-show="!isLoggedIn" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center">
-            <div class="text-4xl">🦷</div>
+            <div class="text-5xl">🦷</div>
             <div>
-                <h2 class="text-2xl font-bold text-slate-800">تسجيل الدخول للعيادة</h2>
-                <p class="text-sm text-gray-500 mt-1">أدخل بيانات الحساب الخاص بك للوصول للسجلات</p>
+                <h2 class="text-2xl font-bold text-slate-800">عيادة الدكتورة شمامي</h2>
+                <p class="text-sm text-gray-500 mt-1">تسجيل الدخول لإدارة العيادة والسجلات الطبية</p>
             </div>
             
             <div class="space-y-4 text-right">
@@ -60,21 +63,22 @@
     <div x-show="isLoggedIn" class="flex h-screen overflow-hidden pb-16 md:pb-0">
         
         <!-- Sidebar for Desktop -->
-        <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
+        <aside class="w-72 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
             <div>
-                <div class="p-5 text-xl font-bold border-b border-slate-800 flex items-center gap-2">
-                    <span class="text-blue-400">🦷</span> عيادة الأسنان
+                <div class="p-5 text-lg font-bold border-b border-slate-800 flex items-center gap-2">
+                    <span class="text-blue-400 text-2xl">🦷</span> 
+                    <span>عيادة طب الأسنان للدكتورة شمامي</span>
                 </div>
                 <nav class="p-4 space-y-2">
                     <button @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">الرئيسية والإحصائيات</button>
-                    <button @click="currentTab = 'patients'" :class="currentTab === 'patients' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">إدارة المرضى</button>
+                    <button @click="currentTab = 'patients'" :class="currentTab === 'patients' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">إدارة المرضى والسجلات</button>
                     <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">المواعيد والأجندة</button>
                     <button @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-right px-4 py-2.5 rounded-lg font-medium transition">الحسابات والمالية</button>
                 </nav>
             </div>
             <div class="p-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
                 <span>مربوط بالسحابة ☁️</span>
-                <button @click="logout()" class="text-red-400 hover:underline">خروج</button>
+                <button @click="logout()" class="text-red-400 hover:underline font-bold">خروج</button>
             </div>
         </aside>
 
@@ -85,7 +89,7 @@
             <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-base md:text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
                 <div class="flex items-center gap-2 md:gap-3">
-                    <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs md:text-sm font-semibold" x-text="currentUserEmail"></span>
+                    <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs md:text-sm font-semibold" x-text="currentUserEmail"></span>
                     <button @click="logout()" class="md:hidden text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">خروج</button>
                 </div>
             </header>
@@ -135,12 +139,12 @@
                 <!-- 2. Patients View -->
                 <div x-show="currentTab === 'patients'" class="space-y-4 md:space-y-6">
                     <div class="flex justify-between items-center gap-2">
-                        <h2 class="text-base md:text-xl font-bold text-slate-800">قائمة المرضى والسجلات</h2>
-                        <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ إضافة مريض</button>
+                        <h2 class="text-base md:text-xl font-bold text-slate-800">قائمة المرضى والسجلات الطبية</h2>
+                        <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ إضافة مريض جديد</button>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
-                        <table class="w-full text-right border-collapse min-w-[700px]">
+                        <table class="w-full text-right border-collapse min-w-[750px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
                                     <th class="p-3 md:p-4">المريض</th>
@@ -148,7 +152,7 @@
                                     <th class="p-3 md:p-4">المبلغ الكلي / المدفوع</th>
                                     <th class="p-3 md:p-4">المتبقي (الدين)</th>
                                     <th class="p-3 md:p-4">الأشعة (Panoramique)</th>
-                                    <th class="p-3 md:p-4 text-center">خيارات وطباعة</th>
+                                    <th class="p-3 md:p-4 text-center">الخيارات والعمليات</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y text-xs md:text-sm">
@@ -156,10 +160,10 @@
                                     <tr>
                                         <td class="p-3 md:p-4">
                                             <div class="font-semibold text-slate-800" x-text="patient.name"></div>
-                                            <div class="text-xs text-gray-400" x-text="patient.medicalHistory"></div>
+                                            <div class="text-xs text-gray-400" x-text="patient.medicalHistory || 'لا يوجد ملاجظات'"></div>
                                         </td>
                                         <td class="p-3 md:p-4 text-gray-600">
-                                            <div x-text="patient.phone"></div>
+                                            <div x-text="patient.phone || 'بدون هاتف'"></div>
                                             <div class="text-xs text-gray-400" x-text="patient.age ? patient.age + ' سنة' : ''"></div>
                                         </td>
                                         <td class="p-3 md:p-4 text-gray-700 font-medium">
@@ -167,7 +171,7 @@
                                             <span class="text-emerald-600 font-bold" x-text="(patient.paidAmount || 0) + ' د.ج'"></span>
                                         </td>
                                         <td class="p-3 md:p-4">
-                                            <span :class="(patient.totalCost - patient.paidAmount) > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="px-2 py-1 rounded-full text-xs font-bold" x-text="((patient.totalCost || 0) - (patient.paidAmount || 0)) + ' د.ج'"></span>
+                                            <span :class="(patient.totalCost - patient.paidAmount) > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="px-2.5 py-1 rounded-full text-xs font-bold" x-text="((patient.totalCost || 0) - (patient.paidAmount || 0)) + ' د.ج'"></span>
                                         </td>
                                         <td class="p-3 md:p-4">
                                             <template x-if="patient.xrayUrl">
@@ -179,6 +183,7 @@
                                         </td>
                                         <td class="p-3 md:p-4 text-center space-x-1 space-x-reverse">
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2.5 py-1 rounded-md text-xs hover:bg-slate-700">📄 وصفة</button>
+                                            <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2.5 py-1 rounded-md text-xs hover:bg-amber-600">✏️ تعديل</button>
                                             <button @click="deletePatient(patient.id)" class="text-red-500 hover:text-red-700 font-semibold px-1">حذف</button>
                                         </td>
                                     </tr>
@@ -287,10 +292,10 @@
         </div>
     </div>
 
-    <!-- Modal 1: Add Patient (With Debt & X-Ray) -->
+    <!-- Modal 1: Add/Edit Patient (With Debt & X-Ray) -->
     <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-slate-800">إضافة مريض وتسجيل خطة الدفع</h3>
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditMode ? 'تعديل بيانات المريض' : 'إضافة مريض جديد وتسجيل الدفعات'"></h3>
             <input type="text" x-model="newPatient.name" placeholder="اسم المريض بالكامل" class="w-full border p-2.5 rounded-lg text-sm">
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" x-model="newPatient.phone" placeholder="رقم الهاتف" class="w-full border p-2.5 rounded-lg text-sm">
@@ -300,21 +305,27 @@
             <div class="border-t pt-2 space-y-2">
                 <label class="block text-xs font-semibold text-slate-700">خطة الدفع والمالية (د.ج):</label>
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="number" x-model="newPatient.totalCost" placeholder="المبلغ الإجمالي للعلاج" class="w-full border p-2.5 rounded-lg text-sm">
-                    <input type="number" x-model="newPatient.paidAmount" placeholder="الدفعة الأولى" class="w-full border p-2.5 rounded-lg text-sm">
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">المبلغ الكلي للعلاج</label>
+                        <input type="number" x-model="newPatient.totalCost" placeholder="المبلغ الإجمالي" class="w-full border p-2.5 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">المبلغ المدفوع</label>
+                        <input type="number" x-model="newPatient.paidAmount" placeholder="المدفوع" class="w-full border p-2.5 rounded-lg text-sm">
+                    </div>
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">رفع صورة الأشعة (Panoramique):</label>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">رفع أو تحديث صورة الأشعة (Panoramique):</label>
                 <input type="file" @change="handleXrayUpload($event)" accept="image/*" class="w-full border p-2 rounded-lg text-xs">
             </div>
 
-            <textarea x-model="newPatient.medicalHistory" placeholder="التاريخ الطبي / الحساسية / الملاحظات" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+            <textarea x-model="newPatient.medicalHistory" placeholder="التاريخ الطبي / الحساسية / ملاحظات العلاج" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
             
             <div class="flex justify-end gap-2 pt-2">
                 <button @click="showPatientModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
-                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">حفظ المريض</button>
+                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" x-text="isEditMode ? 'حفظ التعديلات' : 'حفظ المريض'"></button>
             </div>
         </div>
     </div>
@@ -322,17 +333,17 @@
     <!-- Modal 2: Prescription / Ordonnance -->
     <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-slate-800">إنشاء وصفة طبية (Ordonnance)</h3>
+            <h3 class="text-lg font-bold text-slate-800">تحرير وصفة طبية (Ordonnance)</h3>
             <p class="text-xs text-gray-500">المريض: <span class="font-bold text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
             
-            <textarea x-model="prescriptionText" rows="6" placeholder="اكتب الأدوية هنا... مثال:
-1. Augmentin 1g - (مرتين في اليوم بعد الأكل)
-2. Doliprane 1g - (عند الحاجة)" class="w-full border p-3 rounded-xl text-sm font-mono"></textarea>
+            <textarea x-model="prescriptionText" rows="7" placeholder="اكتب الأدوية هنا... مثال:
+1. Augmentin 1g - حبة مرتين في اليوم بعد الأكل (لمدة 7 أيام)
+2. Doliprane 1g - حبة عند الحاجة عند الألم" class="w-full border p-3 rounded-xl text-sm font-mono leading-relaxed"></textarea>
             
             <div class="flex justify-between items-center pt-2">
                 <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">إلغاء</button>
                 <button @click="printPrescription()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
-                    🖨️ طباعة / حفظ PDF
+                    🖨️ طباعة الوصفة الطبية
                 </button>
             </div>
         </div>
@@ -347,27 +358,39 @@
         </div>
     </div>
 
-    <!-- Hidden Printable Prescription Template -->
+    <!-- Custom Prescription Template For Printing -->
     <div id="printable-prescription" class="hidden p-8 bg-white text-black font-sans">
+        <!-- Top Header -->
         <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold">عيادة لطب وجراحة الأسنان</h1>
-                <p class="text-sm text-gray-600">الدكتور / دكتورة العيادة</p>
-                <p class="text-xs text-gray-500">الهاتف: 0550000000 | العنوان: الجزائر العاصمة</p>
+                <h1 class="text-2xl font-extrabold text-slate-900">عيادة الدكتورة شمامي لطب الأسنان</h1>
+                <p class="text-sm font-bold text-gray-700 mt-1">Chammami Dental Clinic</p>
+                <p class="text-xs text-gray-500 mt-1">العنوان: الجزائر | الهاتف: 0550000000</p>
             </div>
-            <div class="text-4xl">🦷</div>
+            <div class="text-5xl">🦷</div>
         </div>
-        <div class="flex justify-between text-sm mb-8 font-semibold">
-            <p>اسم المريض: <span x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
+
+        <!-- Patient Details & Date -->
+        <div class="flex justify-between text-sm mb-8 font-semibold border-b pb-3">
+            <p>اسم المريض: <span class="font-bold underline" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
             <p>التاريخ: <span x-text="new Date().toLocaleDateString('ar-DZ')"></span></p>
         </div>
-        <div class="my-8 min-h-[300px]">
-            <h3 class="font-bold border-b text-md mb-4 pb-1">الوصفة الطبية (Ordonnance):</h3>
-            <pre class="font-sans text-base leading-relaxed whitespace-pre-wrap" x-text="prescriptionText"></pre>
+
+        <!-- Prescription Body -->
+        <div class="my-8 min-h-[350px]">
+            <h3 class="font-bold text-base mb-4 text-slate-800 border-b pb-1 inline-block">الوصفة الطبية (Ordonnance):</h3>
+            <pre class="font-sans text-base leading-loose whitespace-pre-wrap pl-4" x-text="prescriptionText"></pre>
         </div>
-        <div class="mt-12 pt-8 border-t flex justify-between text-xs text-gray-500">
-            <p>خاتم وتوقيع الطبيب</p>
-            <p>نتمنى لكم الشفاء العاجل</p>
+
+        <!-- Footer -->
+        <div class="mt-12 pt-6 border-t-2 border-slate-900 flex justify-between items-end">
+            <div>
+                <p class="text-sm font-bold text-emerald-700">مع تمنياتنا لكم بالشفاء العاجل 🌟</p>
+            </div>
+            <div class="text-center">
+                <p class="text-xs font-semibold text-gray-600 mb-8">خاتم وتوقيع الدكتورة</p>
+                <p class="text-[10px] text-gray-400">................................................</p>
+            </div>
         </div>
     </div>
 
@@ -436,6 +459,8 @@
                 showFinanceModal: false,
                 showPrescriptionModal: false,
                 showXrayModal: false,
+                isEditMode: false,
+                editingPatientId: null,
 
                 patients: [],
                 appointments: [],
@@ -517,8 +542,17 @@
                 },
 
                 openPatientModal() { 
+                    this.isEditMode = false;
+                    this.editingPatientId = null;
                     this.newPatient = { name: '', phone: '', age: '', medicalHistory: '', totalCost: '', paidAmount: '', xrayUrl: '' }; 
                     this.showPatientModal = true; 
+                },
+
+                editPatient(patient) {
+                    this.isEditMode = true;
+                    this.editingPatientId = patient.id;
+                    this.newPatient = { ...patient };
+                    this.showPatientModal = true;
                 },
 
                 handleXrayUpload(event) {
@@ -540,19 +574,21 @@
                         paidAmount: Number(this.newPatient.paidAmount || 0),
                         uid: this.currentUser.uid 
                     };
-                    const res = await window.db.collection("patients").add(data);
-                    
-                    // إذا كان هناك دفعة أولية، يتم تسجيلها تلقائياً في السجل المالي
-                    if(data.paidAmount > 0) {
-                        await window.db.collection("finances").add({
-                            patientName: data.name,
-                            service: 'دفعة علاج أولية',
-                            amount: data.paidAmount,
-                            uid: this.currentUser.uid
-                        });
+
+                    if (this.isEditMode) {
+                        await window.db.collection("patients").doc(this.editingPatientId).update(data);
+                    } else {
+                        const res = await window.db.collection("patients").add(data);
+                        if(data.paidAmount > 0) {
+                            await window.db.collection("finances").add({
+                                patientName: data.name,
+                                service: 'دفعة علاج أولية',
+                                amount: data.paidAmount,
+                                uid: this.currentUser.uid
+                            });
+                        }
                     }
 
-                    this.patients.push({ id: res.id, ...data });
                     this.showPatientModal = false;
                     this.loadCloudData();
                 },
