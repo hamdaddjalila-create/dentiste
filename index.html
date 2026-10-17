@@ -1,3 +1,6 @@
+HTML
+
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -690,4 +693,34 @@
                 },
                 async deleteAppointment(id) {
                     await window.db.collection("appointments").doc(id).delete();
-                    this.
+                    this.appointments = this.appointments.filter(a => a.id !== id);
+                },
+
+                openFinanceModal() { this.newTx = { patientName: '', service: '', amount: '' }; this.showFinanceModal = true; },
+                async saveFinance() {
+                    if(!this.newTx.amount) return alert('الرجاء إدخال المبلغ');
+                    const data = { ...this.newTx, uid: this.currentUser.uid };
+                    const res = await window.db.collection("finances").add(data);
+                    this.finances.push({ id: res.id, ...data });
+                    this.showFinanceModal = false;
+                },
+                async deleteFinance(id) {
+                    await window.db.collection("finances").doc(id).delete();
+                    this.finances = this.finances.filter(f => f.id !== id);
+                },
+
+                totalRevenue() {
+                    return this.finances.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+                },
+
+                totalDebts() {
+                    return this.patients.reduce((sum, item) => {
+                        const debt = (Number(item.totalCost || 0) - Number(item.paidAmount || 0));
+                        return sum + (debt > 0 ? debt : 0);
+                    }, 0);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
