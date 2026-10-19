@@ -102,10 +102,8 @@
             <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-base md:text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
                 <div class="flex items-center gap-2 md:gap-3">
-                    <!-- زر الشات الداخلي -->
                     <button @click="showChatModal = true" class="relative bg-blue-50 text-blue-700 hover:bg-blue-100 p-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition">
-                        💬 Messagerie
-                        <span x-show="unreadMessagesCount > 0" class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full" x-text="unreadMessagesCount"></span>
+                        💬 Messagerie Interne
                     </button>
                     <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs md:text-sm font-semibold" x-text="currentUserEmail"></span>
                     <button @click="logout()" class="md:hidden text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">Déconnexion</button>
@@ -144,10 +142,11 @@
                             </div>
                             <div class="w-10 h-10 bg-emerald-600 text-white rounded-lg flex items-center justify-center text-lg shadow">💵</div>
                         </div>
-                        <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between">
+                        <div @click="currentTab = 'presence'" class="cursor-pointer bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between hover:border-blue-400 transition">
                             <div>
                                 <p class="text-xs text-gray-500 font-medium">Statut Secrétaire</p>
-                                <h3 class="text-sm font-bold mt-1" :class="assistantOnline ? 'text-emerald-600' : 'text-gray-400'" x-text="assistantOnline ? '🟢 En ligne' : '🔴 Hors ligne'"></h3>
+                                <h3 class="text-sm font-bold mt-1" :class="assistantOnline ? 'text-emerald-600' : 'text-red-500'" x-text="assistantOnline ? '🟢 En ligne' : '🔴 Hors ligne'"></h3>
+                                <p class="text-[10px] text-blue-600 mt-1 underline">Cliquer pour voir les horaires ⏱️</p>
                             </div>
                             <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center text-lg">⏱️</div>
                         </div>
@@ -175,7 +174,7 @@
                                     <th class="p-3 md:p-4" x-show="userRole === 'doctor'">Total / Payé</th>
                                     <th class="p-3 md:p-4" x-show="userRole === 'doctor'">Reste (Dette)</th>
                                     <th class="p-3 md:p-4">Radio</th>
-                                    <th class="p-3 md:p-4 text-center">Actions & Options</th>
+                                    <th class="p-3 md:p-4 text-center">Actions & Modification</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y text-xs md:text-sm">
@@ -207,8 +206,9 @@
                                         <td class="p-3 md:p-4 text-center space-x-1 space-y-1">
                                             <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements</button>
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2 py-1 rounded-md text-xs hover:bg-slate-700">📄 Ordonnance</button>
-                                            <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600">✏️</button>
-                                            <button x-show="userRole === 'doctor'" @click="deletePatient(patient.id)" class="text-red-500 hover:text-red-700 font-semibold px-1">❌</button>
+                                            <!-- أزرار التعديل والحذف للطبيبة -->
+                                            <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600 font-semibold">✏️ Modifier</button>
+                                            <button x-show="userRole === 'doctor'" @click="deletePatient(patient.id)" class="bg-red-500 text-white px-2 py-1 rounded-md text-xs hover:bg-red-600 font-semibold">🗑️ Supprimer</button>
                                         </td>
                                     </tr>
                                 </template>
@@ -263,7 +263,7 @@
                                         <th class="p-3">Heure & Patient</th>
                                         <th class="p-3">Téléphone</th>
                                         <th class="p-3">Acte Médical</th>
-                                        <th class="p-3 text-center">Actions</th>
+                                        <th class="p-3 text-center">Actions & Modification</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y text-xs">
@@ -274,8 +274,9 @@
                                             <td class="p-3 text-gray-600" x-text="app.service"></td>
                                             <td class="p-3 text-center space-x-1">
                                                 <button @click="sendWhatsAppRappel(app)" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">💬 WhatsApp</button>
-                                                <button @click="editAppointment(app)" class="text-amber-600 font-semibold px-1">Modifier</button>
-                                                <button @click="deleteAppointment(app.id)" class="text-red-500 font-semibold px-1">Annuler</button>
+                                                <!-- تعديل المواعيد -->
+                                                <button @click="editAppointment(app)" class="bg-amber-500 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-amber-600">✏️ Modifier</button>
+                                                <button @click="deleteAppointment(app.id)" class="bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-red-600">🗑️ Annuler</button>
                                             </td>
                                         </tr>
                                     </template>
@@ -309,7 +310,7 @@
                                     <th class="p-3 md:p-4">Nom du Patient</th>
                                     <th class="p-3 md:p-4">Service Fourni</th>
                                     <th class="p-3 md:p-4">Montant (DZD)</th>
-                                    <th class="p-3 md:p-4 text-center">Actions</th>
+                                    <th class="p-3 md:p-4 text-center">Actions & Modification</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y text-xs md:text-sm">
@@ -320,8 +321,9 @@
                                         <td class="p-3 md:p-4 text-gray-600" x-text="tx.service"></td>
                                         <td class="p-3 md:p-4 font-bold text-emerald-600" x-text="tx.amount + ' DZD'"></td>
                                         <td class="p-3 md:p-4 text-center space-x-2">
-                                            <button @click="editFinance(tx)" class="text-amber-600 hover:text-amber-800 font-semibold">Modifier</button>
-                                            <button @click="deleteFinance(tx.id)" class="text-red-500 hover:text-red-700 font-semibold">Supprimer</button>
+                                            <!-- زر تعديل المعاملات المالية -->
+                                            <button @click="editFinance(tx)" class="bg-amber-500 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-amber-600">✏️ Modifier</button>
+                                            <button @click="deleteFinance(tx.id)" class="bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-red-600">🗑️ Supprimer</button>
                                         </td>
                                     </tr>
                                 </template>
@@ -330,39 +332,45 @@
                     </div>
                 </div>
 
-                <!-- 5. Vue Suivi de Présence Secrétaire (Doctor Only) -->
+                <!-- 5. Vue Suivi de Présence Secrétaire (جدول وقت دخول وخروج المساعدة باليوم) -->
                 <div x-show="currentTab === 'presence' && userRole === 'doctor'" class="space-y-4 md:space-y-6">
-                    <div class="flex justify-between items-center border-b pb-3">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 gap-2">
                         <div>
-                            <h2 class="text-base md:text-xl font-bold text-slate-800">Historique de présence & connexions de la secrétaire</h2>
-                            <p class="text-xs text-gray-500">Affiche l'heure exacte d'ouverture et de fermeture du système par l'assistante</p>
+                            <h2 class="text-base md:text-xl font-bold text-slate-800">Pointage quotidien & Horaires de l'assistante ⏱️</h2>
+                            <p class="text-xs text-gray-500">Heures exactes d'ouverture (دخول) et de fermeture (خروج) du système par jour</p>
                         </div>
-                        <div class="text-sm font-bold px-3 py-1.5 rounded-full border" :class="assistantOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-600'">
-                            Statut Actuel: <span x-text="assistantOnline ? '🟢 En ligne (Application Ouverte)' : '🔴 Hors Ligne'"></span>
+                        <div class="flex items-center gap-2">
+                            <div class="text-xs md:text-sm font-bold px-3 py-1.5 rounded-full border" :class="assistantOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'">
+                                <span x-text="assistantOnline ? '🟢 En ligne' : '🔴 Hors Ligne'"></span>
+                            </div>
+                            <button @click="openPresenceEditModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Ajouter / Modifier Horaires</button>
                         </div>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
+                        <table class="w-full text-left border-collapse min-w-[650px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
-                                    <th class="p-3 md:p-4">Utilisateur</th>
-                                    <th class="p-3 md:p-4">Action</th>
-                                    <th class="p-3 md:p-4">Date & Heure Exacte</th>
+                                    <th class="p-3 md:p-4">Date (اليوم والتاريخ)</th>
+                                    <th class="p-3 md:p-4 text-emerald-700 font-bold">Heure d'ouverture (ساعة الدخول)</th>
+                                    <th class="p-3 md:p-4 text-red-600 font-bold">Heure de fermeture (ساعة الخروج)</th>
+                                    <th class="p-3 md:p-4 text-center">Actions الطبيبة</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y text-xs md:text-sm">
-                                <template x-for="log in presenceLogs" :key="log.id">
+                                <template x-for="daily in groupedPresenceLogs" :key="daily.date">
                                     <tr>
-                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="log.userEmail"></td>
-                                        <td class="p-3 md:p-4">
-                                            <span :class="log.type === 'login' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'" class="px-2.5 py-1 rounded-full text-xs font-bold" x-text="log.type === 'login' ? '🔓 Connexion (Ouverture)' : '🔒 Déconnexion (Fermeture)'"></span>
+                                        <td class="p-3 md:p-4 font-bold text-slate-800" x-text="daily.date"></td>
+                                        <td class="p-3 md:p-4 text-emerald-700 font-mono font-bold" x-text="daily.firstLogin || 'Non enregistré'"></td>
+                                        <td class="p-3 md:p-4 text-red-600 font-mono font-bold" x-text="daily.lastLogout || 'Non encore fermé (En cours)'"></td>
+                                        <td class="p-3 md:p-4 text-center space-x-1">
+                                            <button @click="editDailyPresence(daily)" class="bg-amber-500 text-white px-2.5 py-1 rounded-md text-xs font-semibold hover:bg-amber-600">✏️ Modifier</button>
+                                            <button @click="deleteDailyPresence(daily.date)" class="bg-red-500 text-white px-2.5 py-1 rounded-md text-xs font-semibold hover:bg-red-600">🗑️ Supprimer</button>
                                         </td>
-                                        <td class="p-3 md:p-4 text-gray-600 font-mono" x-text="log.timestamp"></td>
                                     </tr>
                                 </template>
-                                <template x-if="presenceLogs.length === 0">
-                                    <tr><td colspan="3" class="p-6 text-center text-gray-400">Aucun historique de connexion enregistré pour l'instant.</td></tr>
+                                <template x-if="groupedPresenceLogs.length === 0">
+                                    <tr><td colspan="4" class="p-6 text-center text-gray-400">Aucun enregistrement de présence disponible. Les horaires s'afficheront automatiquement dès la connexion de la secrétaire.</td></tr>
                                 </template>
                             </tbody>
                         </table>
@@ -383,13 +391,36 @@
             <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
                 <span>📅</span><span>Agenda</span>
             </button>
-            <button x-show="userRole === 'doctor'" @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
-                <span>💰</span><span>Finances</span>
+            <button x-show="userRole === 'doctor'" @click="currentTab = 'presence'" :class="currentTab === 'presence' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>⏱️</span><span>Suivi</span>
             </button>
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Modals (النوافذ المنبثقة للتعديل والإضافة) -->
+
+    <!-- Modal تعديل أوقات حضور المساعدة يدوياً للطبيبة -->
+    <div x-show="showPresenceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Modifier / Ajuster Horaires Secrétaire</h3>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Date (التاريخ)</label>
+                <input type="text" x-model="editingPresence.date" class="w-full border p-2.5 rounded-lg text-sm bg-gray-50">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Heure de début / Ouverture (ساعة الدخول)</label>
+                <input type="text" x-model="editingPresence.firstLogin" placeholder="ex: 08:30:00" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Heure de fin / Fermeture (ساعة الخروج)</label>
+                <input type="text" x-model="editingPresence.lastLogout" placeholder="ex: 16:45:00" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showPresenceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="saveDailyPresence()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Enregistrer</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal الشات والرسائل الداخلية بين الطبيبة والمساعدة -->
     <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -405,7 +436,6 @@
                 <button @click="showChatModal = false" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
             </div>
 
-            <!-- قائمة الرسائل -->
             <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
                 <template x-for="msg in messages" :key="msg.id">
                     <div :class="msg.senderEmail === currentUserEmail ? 'text-right' : 'text-left'">
@@ -418,7 +448,6 @@
                 </template>
             </div>
 
-            <!-- إدخال الرسالة -->
             <div class="p-3 bg-white border-t flex gap-2">
                 <input type="text" x-model="newMessageText" @keydown.enter="sendMessage()" placeholder="Rédigez votre message ici..." class="flex-1 border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                 <button @click="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Envoyer 🚀</button>
@@ -525,7 +554,7 @@
             
             <div class="flex justify-end gap-2 pt-2">
                 <button @click="showPatientModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
-                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" x-text="isEditMode ? 'Enregistrer' : 'Sauvegarder'"></button>
+                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" x-text="isEditMode ? 'Enregistrer les modifications' : 'Sauvegarder'"></button>
             </div>
         </div>
     </div>
@@ -598,13 +627,15 @@
                 patients: [],
                 appointments: [],
                 finances: [],
-                presenceLogs: [],
+                rawPresenceLogs: [],
+                groupedPresenceLogs: [],
                 messages: [],
 
                 assistantOnline: false,
                 showChatModal: false,
+                showPresenceModal: false,
+                editingPresence: { date: '', firstLogin: '', lastLogout: '' },
                 newMessageText: '',
-                unreadMessagesCount: 0,
 
                 showPatientModal: false,
                 showAppointmentModal: false,
@@ -678,39 +709,101 @@
                 },
 
                 recordPresence(type) {
-                    const timeStr = new Date().toLocaleString('fr-FR');
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('fr-FR');
+                    const timeStr = now.toLocaleTimeString('fr-FR');
+
                     window.db.collection('presence_logs').add({
                         userEmail: this.currentUserEmail,
                         role: this.userRole,
                         type: type,
-                        timestamp: timeStr,
+                        date: dateStr,
+                        time: timeStr,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
                     if (this.userRole === 'assistant') {
                         window.db.collection('status').doc('assistant').set({
                             isOnline: type === 'login',
-                            lastSeen: timeStr
+                            lastSeen: `${dateStr} à ${timeStr}`
                         });
                     }
                 },
 
                 listenToPresenceAndChat() {
-                    // متابعة حالة متصل للمساعدة
                     window.db.collection('status').doc('assistant').onSnapshot(doc => {
                         if (doc.exists) {
                             this.assistantOnline = doc.data().isOnline;
                         }
                     });
 
-                    // متابعة الرسائل الداخلية
                     window.db.collection('chat').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
                         this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     });
 
-                    // متابعة سجلات الدخول للطبيبة
-                    window.db.collection('presence_logs').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-                        this.presenceLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // تجميع سجلات الدخول والخروج يومياً بالطريقة المطلوبة
+                    window.db.collection('presence_logs').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+                        this.rawPresenceLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        this.processGroupedPresence();
+                    });
+                },
+
+                processGroupedPresence() {
+                    const groups = {};
+                    this.rawPresenceLogs.forEach(log => {
+                        if (!log.date) return;
+                        if (!groups[log.date]) {
+                            groups[log.date] = { date: log.date, firstLogin: null, lastLogout: null };
+                        }
+                        if (log.type === 'login' && !groups[log.date].firstLogin) {
+                            groups[log.date].firstLogin = log.time;
+                        }
+                        if (log.type === 'logout') {
+                            groups[log.date].lastLogout = log.time;
+                        }
+                    });
+                    this.groupedPresenceLogs = Object.values(groups).reverse();
+                },
+
+                openPresenceEditModal() {
+                    const todayStr = new Date().toLocaleDateString('fr-FR');
+                    this.editingPresence = { date: todayStr, firstLogin: '08:30:00', lastLogout: '16:30:00' };
+                    this.showPresenceModal = true;
+                },
+
+                editDailyPresence(daily) {
+                    this.editingPresence = { ...daily };
+                    this.showPresenceModal = true;
+                },
+
+                saveDailyPresence() {
+                    if (!this.editingPresence.date) return;
+                    window.db.collection('presence_logs').add({
+                        userEmail: 'assistant@clinic.com',
+                        role: 'assistant',
+                        type: 'login',
+                        date: this.editingPresence.date,
+                        time: this.editingPresence.firstLogin,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    if (this.editingPresence.lastLogout) {
+                        window.db.collection('presence_logs').add({
+                            userEmail: 'assistant@clinic.com',
+                            role: 'assistant',
+                            type: 'logout',
+                            date: this.editingPresence.date,
+                            time: this.editingPresence.lastLogout,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    this.showPresenceModal = false;
+                },
+
+                deleteDailyPresence(dateStr) {
+                    if (!confirm(`Supprimer l'historique du ${dateStr}?`)) return;
+                    const logsToDelete = this.rawPresenceLogs.filter(l => l.date === dateStr);
+                    logsToDelete.forEach(l => {
+                        window.db.collection('presence_logs').doc(l.id).delete();
                     });
                 },
 
@@ -875,7 +968,7 @@
                     if (this.currentTab === 'patients') return 'Gestion des patients';
                     if (this.currentTab === 'appointments') return 'Agenda & Rendez-vous';
                     if (this.currentTab === 'finance') return 'Gestion financière & Recette';
-                    if (this.currentTab === 'presence') return 'Suivi de présence & Connexions';
+                    if (this.currentTab === 'presence') return 'Pointage quotidien & Horaires de la secrétaire';
                     return '';
                 },
 
