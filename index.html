@@ -797,4 +797,85 @@
         }
     </script>
 </body>
+   <!-- ========================================== -->
+<!-- 1️⃣ زر فتح الدردشة (ضع هذا الزر في الـ Header) -->
+<!-- ========================================== -->
+<button @click="showChatModal = true" class="relative bg-blue-50 text-blue-700 hover:bg-blue-100 p-2 px-3 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition">
+    💬 Messagerie Interne
+</button>
+
+
+<!-- ========================================== -->
+<!-- 2️⃣ نافذة الدردشة المنبثقة (ضع هذا الجزء مع باقي الـ Modals في الأسفل) -->
+<!-- ========================================== -->
+<div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
+        
+        <!-- الشريط العلوي للدردشة -->
+        <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">💬</span>
+                <div>
+                    <h3 class="font-bold text-sm">Messagerie Interne du Cabinet</h3>
+                    <p class="text-[10px] text-blue-400" x-text="userRole === 'doctor' ? 'Discussion avec la secrétaire' : 'Discussion avec le médecin'"></p>
+                </div>
+            </div>
+            <button @click="showChatModal = false" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+
+        <!-- منطقة عرض الرسائل -->
+        <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+            <template x-for="msg in messages" :key="msg.id">
+                <div :class="msg.senderEmail === currentUserEmail ? 'text-right' : 'text-left'">
+                    <div :class="msg.senderEmail === currentUserEmail ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl ml-auto' : 'bg-white border text-slate-800 rounded-r-xl rounded-tl-xl'" class="inline-block p-3 max-w-[80%] text-xs shadow-sm">
+                        <div class="font-bold text-[10px] opacity-75 mb-0.5" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨‍⚕️' : 'Secrétaire 📋'"></div>
+                        <div class="leading-relaxed" x-text="msg.text"></div>
+                        <div class="text-[9px] opacity-60 text-right mt-1" x-text="msg.time"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- حقل إدخال الرسالة وإرسالها -->
+        <div class="p-3 bg-white border-t flex gap-2">
+            <input type="text" x-model="newMessageText" @keydown.enter="sendMessage()" placeholder="Rédigez votre message ici..." class="flex-1 border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+            <button @click="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Envoyer 🚀</button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ========================================== -->
+<!-- 3️⃣ كود البرمجة (ضعه داخل كائن clinicApp في Alpine.js) -->
+<!-- ========================================== -->
+<script>
+    // 1. أضف هذه المتغيرات داخل return { ... } في دالة clinicApp():
+    showChatModal: false,
+    messages: [],
+    newMessageText: '',
+
+    // 2. أضف هذه الدالة للاستماع للرسائل الفورية من Firebase:
+    listenToChat() {
+        window.db.collection('chat').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+            this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        });
+    },
+
+    // 3. أضف هذه الدالة لإرسال الرسائل:
+    sendMessage() {
+        if (!this.newMessageText.trim()) return;
+        const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        
+        window.db.collection('chat').add({
+            text: this.newMessageText,
+            senderEmail: this.currentUserEmail,
+            senderRole: this.userRole,
+            time: timeStr,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        this.newMessageText = '';
+    }
+</script> 
 </html>
