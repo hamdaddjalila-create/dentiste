@@ -83,6 +83,10 @@
                     <button @click="currentTab = 'patients'" :class="currentTab === 'patients' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition">Patients & Dossiers</button>
                     <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition">Rendez-vous & Agenda (12M)</button>
                     <button x-show="userRole === 'doctor'" @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition">Comptabilité & Finances</button>
+                    <button x-show="userRole === 'doctor'" @click="currentTab = 'presence'" :class="currentTab === 'presence' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition flex items-center justify-between">
+                        <span>Suivi Secrétaire ⏱️</span>
+                        <span x-show="assistantOnline" class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+                    </button>
                 </nav>
             </div>
             <div class="p-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
@@ -98,6 +102,11 @@
             <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-base md:text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
                 <div class="flex items-center gap-2 md:gap-3">
+                    <!-- زر الشات الداخلي -->
+                    <button @click="showChatModal = true" class="relative bg-blue-50 text-blue-700 hover:bg-blue-100 p-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition">
+                        💬 Messagerie
+                        <span x-show="unreadMessagesCount > 0" class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full" x-text="unreadMessagesCount"></span>
+                    </button>
                     <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs md:text-sm font-semibold" x-text="currentUserEmail"></span>
                     <button @click="logout()" class="md:hidden text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">Déconnexion</button>
                 </div>
@@ -128,7 +137,6 @@
                             </div>
                             <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg">📅</div>
                         </div>
-                        <!-- الملاحظة الأولى: بطاقة وزر مداخيل اليوم -->
                         <div class="bg-emerald-50 border-emerald-200 p-5 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
                                 <p class="text-xs text-emerald-700 font-bold">Recette du Jour (اليوم)</p>
@@ -138,10 +146,10 @@
                         </div>
                         <div class="bg-white p-5 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
-                                <p class="text-xs text-gray-500 font-medium">Dettes en attente</p>
-                                <h3 class="text-xl font-bold mt-1 text-red-600" x-text="totalDebts() + ' DZD'"></h3>
+                                <p class="text-xs text-gray-500 font-medium">Statut Secrétaire</p>
+                                <h3 class="text-sm font-bold mt-1" :class="assistantOnline ? 'text-emerald-600' : 'text-gray-400'" x-text="assistantOnline ? '🟢 En ligne' : '🔴 Hors ligne'"></h3>
                             </div>
-                            <div class="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-lg">⚠️</div>
+                            <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center text-lg">⏱️</div>
                         </div>
                     </div>
                 </div>
@@ -153,7 +161,6 @@
                         
                         <div class="flex flex-wrap gap-2 w-full md:w-auto">
                             <input type="text" x-model="searchQuery" placeholder="🔍 Rechercher par nom ou tél..." class="border p-2 rounded-lg text-xs md:text-sm flex-1 md:w-64 outline-none focus:ring-2 focus:ring-blue-500">
-                            
                             <button @click="exportPatientsExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-1">📊 Excel</button>
                             <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Ajouter Patient</button>
                         </div>
@@ -198,7 +205,6 @@
                                             </template>
                                         </td>
                                         <td class="p-3 md:p-4 text-center space-x-1 space-y-1">
-                                            <!-- الملاحظة الثانية: زر إظهار مدفوعات وأقساط المريض -->
                                             <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements</button>
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2 py-1 rounded-md text-xs hover:bg-slate-700">📄 Ordonnance</button>
                                             <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600">✏️</button>
@@ -211,7 +217,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Vue Rendez-vous & Agenda (الملاحظة الثالثة: أجندة الـ 12 شهراً) -->
+                <!-- 3. Vue Rendez-vous & Agenda -->
                 <div x-show="currentTab === 'appointments'" class="space-y-4 md:space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                         <div>
@@ -221,7 +227,6 @@
                         <button @click="openAppointmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Nouveau Rendez-vous</button>
                     </div>
 
-                    <!-- Calendrier التقويم والأنشطة -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border space-y-4">
                         <div class="flex items-center justify-between border-b pb-3">
                             <button @click="changeMonth(-1)" class="bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-lg text-sm font-bold">◀ Précédent</button>
@@ -325,6 +330,45 @@
                     </div>
                 </div>
 
+                <!-- 5. Vue Suivi de Présence Secrétaire (Doctor Only) -->
+                <div x-show="currentTab === 'presence' && userRole === 'doctor'" class="space-y-4 md:space-y-6">
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <div>
+                            <h2 class="text-base md:text-xl font-bold text-slate-800">Historique de présence & connexions de la secrétaire</h2>
+                            <p class="text-xs text-gray-500">Affiche l'heure exacte d'ouverture et de fermeture du système par l'assistante</p>
+                        </div>
+                        <div class="text-sm font-bold px-3 py-1.5 rounded-full border" :class="assistantOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-600'">
+                            Statut Actuel: <span x-text="assistantOnline ? '🟢 En ligne (Application Ouverte)' : '🔴 Hors Ligne'"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
+                                    <th class="p-3 md:p-4">Utilisateur</th>
+                                    <th class="p-3 md:p-4">Action</th>
+                                    <th class="p-3 md:p-4">Date & Heure Exacte</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y text-xs md:text-sm">
+                                <template x-for="log in presenceLogs" :key="log.id">
+                                    <tr>
+                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="log.userEmail"></td>
+                                        <td class="p-3 md:p-4">
+                                            <span :class="log.type === 'login' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'" class="px-2.5 py-1 rounded-full text-xs font-bold" x-text="log.type === 'login' ? '🔓 Connexion (Ouverture)' : '🔒 Déconnexion (Fermeture)'"></span>
+                                        </td>
+                                        <td class="p-3 md:p-4 text-gray-600 font-mono" x-text="log.timestamp"></td>
+                                    </tr>
+                                </template>
+                                <template x-if="presenceLogs.length === 0">
+                                    <tr><td colspan="3" class="p-6 text-center text-gray-400">Aucun historique de connexion enregistré pour l'instant.</td></tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </main>
         </div>
 
@@ -345,7 +389,42 @@
         </div>
     </div>
 
-    <!-- Modals (النوافذ المنبثقة) -->
+    <!-- Modals -->
+
+    <!-- Modal الشات والرسائل الداخلية بين الطبيبة والمساعدة -->
+    <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">💬</span>
+                    <div>
+                        <h3 class="font-bold text-sm">Messagerie Interne du Cabinet</h3>
+                        <p class="text-[10px] text-blue-400" x-text="userRole === 'doctor' ? 'Discussion avec la secrétaire' : 'Discussion avec le médecin'"></p>
+                    </div>
+                </div>
+                <button @click="showChatModal = false" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+
+            <!-- قائمة الرسائل -->
+            <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+                <template x-for="msg in messages" :key="msg.id">
+                    <div :class="msg.senderEmail === currentUserEmail ? 'text-right' : 'text-left'">
+                        <div :class="msg.senderEmail === currentUserEmail ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl ml-auto' : 'bg-white border text-slate-800 rounded-r-xl rounded-tl-xl'" class="inline-block p-3 max-w-[80%] text-xs shadow-sm">
+                            <div class="font-bold text-[10px] opacity-75 mb-0.5" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨‍⚕️' : 'Secrétaire 📋'"></div>
+                            <div class="leading-relaxed" x-text="msg.text"></div>
+                            <div class="text-[9px] opacity-60 text-right mt-1" x-text="msg.time"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- إدخال الرسالة -->
+            <div class="p-3 bg-white border-t flex gap-2">
+                <input type="text" x-model="newMessageText" @keydown.enter="sendMessage()" placeholder="Rédigez votre message ici..." class="flex-1 border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                <button @click="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Envoyer 🚀</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal سجل المدفوعات والأقساط للمريض -->
     <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -497,7 +576,7 @@
         window.db = firebase.firestore();
     </script>
 
-    <!-- App Logic Logic Alpine.js -->
+    <!-- App Logic Alpine.js -->
     <script>
         const DOCTOR_EMAIL = "doctor@clinic.com";
 
@@ -519,6 +598,13 @@
                 patients: [],
                 appointments: [],
                 finances: [],
+                presenceLogs: [],
+                messages: [],
+
+                assistantOnline: false,
+                showChatModal: false,
+                newMessageText: '',
+                unreadMessagesCount: 0,
 
                 showPatientModal: false,
                 showAppointmentModal: false,
@@ -559,9 +645,18 @@
                             this.currentUser = user;
                             this.currentUserEmail = user.email;
                             this.userRole = user.email.toLowerCase() === DOCTOR_EMAIL.toLowerCase() ? 'doctor' : 'assistant';
+                            
+                            this.recordPresence('login');
                             this.fetchData();
+                            this.listenToPresenceAndChat();
                         } else {
                             this.isLoggedIn = false;
+                        }
+                    });
+
+                    window.addEventListener('beforeunload', () => {
+                        if (this.currentUser) {
+                            this.recordPresence('logout');
                         }
                     });
                 },
@@ -578,7 +673,60 @@
                 },
 
                 logout() {
+                    this.recordPresence('logout');
                     window.auth.signOut();
+                },
+
+                recordPresence(type) {
+                    const timeStr = new Date().toLocaleString('fr-FR');
+                    window.db.collection('presence_logs').add({
+                        userEmail: this.currentUserEmail,
+                        role: this.userRole,
+                        type: type,
+                        timestamp: timeStr,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    if (this.userRole === 'assistant') {
+                        window.db.collection('status').doc('assistant').set({
+                            isOnline: type === 'login',
+                            lastSeen: timeStr
+                        });
+                    }
+                },
+
+                listenToPresenceAndChat() {
+                    // متابعة حالة متصل للمساعدة
+                    window.db.collection('status').doc('assistant').onSnapshot(doc => {
+                        if (doc.exists) {
+                            this.assistantOnline = doc.data().isOnline;
+                        }
+                    });
+
+                    // متابعة الرسائل الداخلية
+                    window.db.collection('chat').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+                        this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+
+                    // متابعة سجلات الدخول للطبيبة
+                    window.db.collection('presence_logs').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                        this.presenceLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+                },
+
+                sendMessage() {
+                    if (!this.newMessageText.trim()) return;
+                    const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    window.db.collection('chat').add({
+                        text: this.newMessageText,
+                        senderEmail: this.currentUserEmail,
+                        senderRole: this.userRole,
+                        time: timeStr,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    this.newMessageText = '';
                 },
 
                 fetchData() {
@@ -727,6 +875,7 @@
                     if (this.currentTab === 'patients') return 'Gestion des patients';
                     if (this.currentTab === 'appointments') return 'Agenda & Rendez-vous';
                     if (this.currentTab === 'finance') return 'Gestion financière & Recette';
+                    if (this.currentTab === 'presence') return 'Suivi de présence & Connexions';
                     return '';
                 },
 
