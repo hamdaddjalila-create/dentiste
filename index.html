@@ -264,4 +264,537 @@
                                 <tbody class="divide-y text-xs">
                                     <template x-for="app in selectedDayAppointments" :key="app.id">
                                         <tr>
-                                            <td class="p-3 font-semibold text-slate-800" x
+                                            <td class="p-3 font-semibold text-slate-800" x-text="app.time + ' - ' + app.patientName"></td>
+                                            <td class="p-3 text-gray-600" x-text="app.patientPhone || 'N/A'"></td>
+                                            <td class="p-3 text-gray-600" x-text="app.service"></td>
+                                            <td class="p-3 text-center space-x-1">
+                                                <button @click="sendWhatsAppRappel(app)" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">💬 WhatsApp</button>
+                                                <button @click="editAppointment(app)" class="text-amber-600 font-semibold px-1">Modifier</button>
+                                                <button @click="deleteAppointment(app.id)" class="text-red-500 font-semibold px-1">Annuler</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="selectedDayAppointments.length === 0">
+                                        <tr><td colspan="4" class="p-4 text-center text-gray-400">Aucun rendez-vous à cette date.</td></tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Vue Finances (Doctor Only) -->
+                <div x-show="currentTab === 'finance' && userRole === 'doctor'" class="space-y-4 md:space-y-6">
+                    <div class="flex justify-between items-center gap-2">
+                        <div>
+                            <h2 class="text-base md:text-xl font-bold text-slate-800">Registre des transactions financières</h2>
+                            <p class="text-xs text-emerald-600 font-bold" x-text="'Recette Aujourd\'hui: ' + todayRevenue() + ' DZD'"></p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="exportFinanceExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-1">📊 Excel</button>
+                            <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Enregistrer Paiement</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead>
+                                <tr class="bg-slate-50 border-b text-slate-600 text-xs md:text-sm">
+                                    <th class="p-3 md:p-4">Date</th>
+                                    <th class="p-3 md:p-4">Nom du Patient</th>
+                                    <th class="p-3 md:p-4">Service Fourni</th>
+                                    <th class="p-3 md:p-4">Montant (DZD)</th>
+                                    <th class="p-3 md:p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y text-xs md:text-sm">
+                                <template x-for="tx in finances" :key="tx.id">
+                                    <tr>
+                                        <td class="p-3 md:p-4 text-gray-500" x-text="tx.date || 'Aujourd\'hui'"></td>
+                                        <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="tx.patientName"></td>
+                                        <td class="p-3 md:p-4 text-gray-600" x-text="tx.service"></td>
+                                        <td class="p-3 md:p-4 font-bold text-emerald-600" x-text="tx.amount + ' DZD'"></td>
+                                        <td class="p-3 md:p-4 text-center space-x-2">
+                                            <button @click="editFinance(tx)" class="text-amber-600 hover:text-amber-800 font-semibold">Modifier</button>
+                                            <button @click="deleteFinance(tx.id)" class="text-red-500 hover:text-red-700 font-semibold">Supprimer</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- Navigation mobile -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white flex justify-around p-2 border-t border-slate-800 z-40 text-center text-xs">
+            <button x-show="userRole === 'doctor'" @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>📊</span><span>Accueil</span>
+            </button>
+            <button @click="currentTab = 'patients'" :class="currentTab === 'patients' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>👥</span><span>Patients</span>
+            </button>
+            <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>📅</span><span>Agenda</span>
+            </button>
+            <button x-show="userRole === 'doctor'" @click="currentTab = 'finance'" :class="currentTab === 'finance' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
+                <span>💰</span><span>Finances</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals (النوافذ المنبثقة) -->
+
+    <!-- Modal سجل المدفوعات والأقساط للمريض -->
+    <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800 border-b pb-2">
+                Historique Financier: <span class="text-blue-600" x-text="selectedPatientForHistory ? selectedPatientForHistory.name : ''"></span>
+            </h3>
+            
+            <div class="grid grid-cols-3 gap-2 text-center text-xs bg-slate-50 p-3 rounded-lg border">
+                <div>
+                    <span class="block text-gray-500">Total Traitement</span>
+                    <span class="font-bold text-slate-800" x-text="(selectedPatientForHistory?.totalCost || 0) + ' DZD'"></span>
+                </div>
+                <div>
+                    <span class="block text-gray-500">Total Payé</span>
+                    <span class="font-bold text-emerald-600" x-text="(selectedPatientForHistory?.paidAmount || 0) + ' DZD'"></span>
+                </div>
+                <div>
+                    <span class="block text-gray-500">Reste (Dette)</span>
+                    <span class="font-bold text-red-600" x-text="((selectedPatientForHistory?.totalCost || 0) - (selectedPatientForHistory?.paidAmount || 0)) + ' DZD'"></span>
+                </div>
+            </div>
+
+            <div class="border-t pt-3 space-y-2">
+                <h4 class="text-xs font-bold text-slate-700">+ Ajouter une tranche / verser un acompte:</h4>
+                <div class="flex gap-2">
+                    <input type="number" x-model="newTrancheAmount" placeholder="Montant (DZD)" class="border p-2 rounded-lg text-xs flex-1">
+                    <button @click="addInstallment()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Enregistrer</button>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button @click="showPaymentHistoryModal = false" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ordonnance -->
+    <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Établir une ordonnance médicale</h3>
+            <p class="text-xs text-gray-500">Patient: <span class="font-bold text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
+            
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1.5">⚡ Ajouter un médicament rapidement:</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="drug in quickDrugs" :key="drug.name">
+                        <button @click="addDrugToPrescription(drug)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-2.5 py-1 rounded-lg text-xs border border-slate-300 font-semibold transition">+ <span x-text="drug.name"></span></button>
+                    </template>
+                </div>
+            </div>
+
+            <textarea x-model="prescriptionText" rows="7" placeholder="Rédigez les médicaments et les instructions ici..." class="w-full border p-3 rounded-xl text-sm font-mono leading-relaxed"></textarea>
+            
+            <div class="flex justify-between items-center pt-2">
+                <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="printPrescription()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
+                    🖨️ Imprimer l'ordonnance
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Radio -->
+    <div x-show="showXrayModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-2xl w-full p-4 text-center space-y-4">
+            <h3 class="text-lg font-bold">Radio Médicale (Panoramique)</h3>
+            <img :src="currentXrayUrl" class="max-h-[70vh] mx-auto rounded-lg shadow-md border">
+            <button @click="showXrayModal = false" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-sm">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modal Patient -->
+    <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditMode ? 'Modifier le patient' : 'Ajouter un nouveau patient'"></h3>
+            <input type="text" x-model="newPatient.name" placeholder="Nom complet du patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" x-model="newPatient.phone" placeholder="Téléphone" class="w-full border p-2.5 rounded-lg text-sm">
+                <input type="number" x-model="newPatient.age" placeholder="Âge" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            
+            <div class="border-t pt-2 space-y-2" x-show="userRole === 'doctor'">
+                <label class="block text-xs font-semibold text-slate-700">Plan de paiement (DZD):</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Total</label>
+                        <input type="number" x-model="newPatient.totalCost" placeholder="Montant Total" class="w-full border p-2.5 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Payé</label>
+                        <input type="number" x-model="newPatient.paidAmount" placeholder="Montant Payé" class="w-full border p-2.5 rounded-lg text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <textarea x-model="newPatient.medicalHistory" placeholder="Antécédents médicaux / Allergies / Remarques" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+            
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showPatientModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" x-text="isEditMode ? 'Enregistrer' : 'Sauvegarder'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rendez-vous -->
+    <div x-show="showAppointmentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditAppMode ? 'Modifier le rendez-vous' : 'Prendre un nouveau rendez-vous'"></h3>
+            <input type="text" x-model="newApp.patientName" placeholder="Nom du Patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newApp.patientPhone" placeholder="Téléphone du Patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newApp.service" placeholder="Acte médical (ex: Plombage, Extraction...)" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="datetime-local" x-model="newApp.dateTime" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showAppointmentModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="saveAppointment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm" x-text="isEditAppMode ? 'Sauvegarder' : 'Enregistrer'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Finance -->
+    <div x-show="showFinanceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditFinanceMode ? 'Modifier la transaction' : 'Enregistrer un paiement'"></h3>
+            <input type="text" x-model="newTx.patientName" placeholder="Nom du Patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newTx.service" placeholder="Service fourni" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="number" x-model="newTx.amount" placeholder="Montant (DZD)" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showFinanceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="saveFinance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm" x-text="isEditFinanceMode ? 'Sauvegarder' : 'Enregistrer'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Initialization -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBXmd7pjdj7hyuhhSyTK7_gTufkCjf52dc",
+            authDomain: "dentist-app-f2751.firebaseapp.com",
+            projectId: "dentist-app-f2751",
+            storageBucket: "dentist-app-f2751.firebasestorage.app",
+            messagingSenderId: "74767532187",
+            appId: "1:74767532187:web:abbcadb5c52c41a006863e",
+            measurementId: "G-0NSRW400TN"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+    </script>
+
+    <!-- App Logic Logic Alpine.js -->
+    <script>
+        const DOCTOR_EMAIL = "doctor@clinic.com";
+
+        function clinicApp() {
+            return {
+                isLoggedIn: false,
+                currentTab: 'patients',
+                loadingAuth: false,
+                loadingData: false,
+                authError: '',
+                currentUser: null,
+                currentUserEmail: '',
+                userRole: 'assistant',
+
+                searchQuery: '',
+                loginEmail: '',
+                loginPassword: '',
+
+                patients: [],
+                appointments: [],
+                finances: [],
+
+                showPatientModal: false,
+                showAppointmentModal: false,
+                showFinanceModal: false,
+                showPaymentHistoryModal: false,
+                showPrescriptionModal: false,
+                showXrayModal: false,
+
+                selectedPatientForHistory: null,
+                selectedPatientForRx: null,
+                currentXrayUrl: '',
+                prescriptionText: '',
+                newTrancheAmount: 0,
+
+                quickDrugs: [
+                    { name: 'Amoxicilline 1g', desc: '1 gélule 2 fois par jour pendant 7 jours' },
+                    { name: 'Paracétamol 1g', desc: '1 comprimé toutes les 8h si douleur' },
+                    { name: 'Ibuprofène 400mg', desc: '1 comprimé 3 fois par jour après le repas' },
+                    { name: 'Bain de bouche Chlorhexidine', desc: '2 rincages par jour après le brossage' }
+                ],
+
+                currentYear: new Date().getFullYear(),
+                currentMonth: new Date().getMonth(),
+                selectedDateStr: new Date().toISOString().split('T')[0],
+
+                newPatient: { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' },
+                newApp: { patientName: '', patientPhone: '', service: '', dateTime: '' },
+                newTx: { patientName: '', service: '', amount: 0, date: '' },
+
+                isEditMode: false,
+                isEditAppMode: false,
+                isEditFinanceMode: false,
+
+                initApp() {
+                    window.auth.onAuthStateChanged((user) => {
+                        if (user) {
+                            this.isLoggedIn = true;
+                            this.currentUser = user;
+                            this.currentUserEmail = user.email;
+                            this.userRole = user.email.toLowerCase() === DOCTOR_EMAIL.toLowerCase() ? 'doctor' : 'assistant';
+                            this.fetchData();
+                        } else {
+                            this.isLoggedIn = false;
+                        }
+                    });
+                },
+
+                login() {
+                    this.loadingAuth = true;
+                    this.authError = '';
+                    window.auth.signInWithEmailAndPassword(this.loginEmail, this.loginPassword)
+                        .then(() => { this.loadingAuth = false; })
+                        .catch((err) => {
+                            this.loadingAuth = false;
+                            this.authError = "Email ou mot de passe incorrect.";
+                        });
+                },
+
+                logout() {
+                    window.auth.signOut();
+                },
+
+                fetchData() {
+                    this.loadingData = true;
+                    window.db.collection('patients').onSnapshot(snapshot => {
+                        this.patients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+                    window.db.collection('appointments').onSnapshot(snapshot => {
+                        this.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+                    window.db.collection('finances').onSnapshot(snapshot => {
+                        this.finances = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        this.loadingData = false;
+                    });
+                },
+
+                todayRevenue() {
+                    const today = new Date().toISOString().split('T')[0];
+                    return this.finances
+                        .filter(f => f.date === today)
+                        .reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+                },
+
+                todayAppointmentsCount() {
+                    const today = new Date().toISOString().split('T')[0];
+                    return this.appointments.filter(a => a.dateTime && a.dateTime.startsWith(today)).length;
+                },
+
+                totalDebts() {
+                    return this.patients.reduce((sum, p) => sum + ((Number(p.totalCost) || 0) - (Number(p.paidAmount) || 0)), 0);
+                },
+
+                openPaymentHistoryModal(patient) {
+                    this.selectedPatientForHistory = patient;
+                    this.newTrancheAmount = 0;
+                    this.showPaymentHistoryModal = true;
+                },
+
+                addInstallment() {
+                    if (!this.selectedPatientForHistory || this.newTrancheAmount <= 0) return;
+                    const newPaid = (Number(this.selectedPatientForHistory.paidAmount) || 0) + Number(this.newTrancheAmount);
+                    
+                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaid });
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    window.db.collection('finances').add({
+                        patientName: this.selectedPatientForHistory.name,
+                        service: 'Versement tranche',
+                        amount: Number(this.newTrancheAmount),
+                        date: today
+                    });
+
+                    this.selectedPatientForHistory.paidAmount = newPaid;
+                    this.newTrancheAmount = 0;
+                },
+
+                openPrescriptionModal(patient) {
+                    this.selectedPatientForRx = patient;
+                    this.prescriptionText = '';
+                    this.showPrescriptionModal = true;
+                },
+
+                addDrugToPrescription(drug) {
+                    this.prescriptionText += `- ${drug.name}: ${drug.desc}\n`;
+                },
+
+                printPrescription() {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                        <head><title>Ordonnance - ${this.selectedPatientForRx?.name}</title></head>
+                        <body style="font-family: Arial; padding: 40px;">
+                            <h2 style="text-align: center;">Cabinet de médecine et de chirurgie dentaire</h2>
+                            <hr><br>
+                            <p><strong>Patient:</strong> ${this.selectedPatientForRx?.name}</p>
+                            <p><strong>Date:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+                            <br>
+                            <h3>Ordonnance:</h3>
+                            <pre style="font-family: inherit; font-size: 16px; line-height: 1.6;">${this.prescriptionText}</pre>
+                            <br><br><br>
+                            <p style="text-align: right;"><strong>Signature & Cachet</strong></p>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                },
+
+                viewXray(url) {
+                    this.currentXrayUrl = url;
+                    this.showXrayModal = true;
+                },
+
+                getMonthYearLabel() {
+                    const date = new Date(this.currentYear, this.currentMonth, 1);
+                    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                },
+
+                changeMonth(delta) {
+                    this.currentMonth += delta;
+                    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+                    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+                },
+
+                get calendarBlanks() {
+                    const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+                    return Array.from({ length: (firstDay === 0 ? 6 : firstDay - 1) });
+                },
+
+                get daysInMonth() {
+                    const count = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+                    return Array.from({ length: count }, (_, i) => i + 1);
+                },
+
+                selectDate(day) {
+                    const monthStr = String(this.currentMonth + 1).padStart(2, '0');
+                    const dayStr = String(day).padStart(2, '0');
+                    this.selectedDateStr = `${this.currentYear}-${monthStr}-${dayStr}`;
+                },
+
+                isDaySelected(day) {
+                    const monthStr = String(this.currentMonth + 1).padStart(2, '0');
+                    const dayStr = String(day).padStart(2, '0');
+                    return this.selectedDateStr === `${this.currentYear}-${monthStr}-${dayStr}`;
+                },
+
+                hasAppointmentsOnDay(day) {
+                    const monthStr = String(this.currentMonth + 1).padStart(2, '0');
+                    const dayStr = String(day).padStart(2, '0');
+                    const dateFormatted = `${this.currentYear}-${monthStr}-${dayStr}`;
+                    return this.appointments.some(a => a.dateTime && a.dateTime.startsWith(dateFormatted));
+                },
+
+                get selectedDayAppointments() {
+                    return this.appointments
+                        .filter(a => a.dateTime && a.dateTime.startsWith(this.selectedDateStr))
+                        .map(a => ({ ...a, time: a.dateTime.split('T')[1] || '' }));
+                },
+
+                get selectedDateFormatted() {
+                    return new Date(this.selectedDateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                },
+
+                getPageTitle() {
+                    if (this.currentTab === 'dashboard') return 'Tableau de bord de la clinique';
+                    if (this.currentTab === 'patients') return 'Gestion des patients';
+                    if (this.currentTab === 'appointments') return 'Agenda & Rendez-vous';
+                    if (this.currentTab === 'finance') return 'Gestion financière & Recette';
+                    return '';
+                },
+
+                get filteredPatients() {
+                    if (!this.searchQuery) return this.patients;
+                    return this.patients.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || (p.phone && p.phone.includes(this.searchQuery)));
+                },
+
+                openPatientModal() { this.newPatient = { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' }; this.isEditMode = false; this.showPatientModal = true; },
+                savePatient() {
+                    if (!this.newPatient.name) return;
+                    if (this.isEditMode) {
+                        window.db.collection('patients').doc(this.newPatient.id).update(this.newPatient);
+                    } else {
+                        window.db.collection('patients').add(this.newPatient);
+                    }
+                    this.showPatientModal = false;
+                },
+                editPatient(p) { this.newPatient = { ...p }; this.isEditMode = true; this.showPatientModal = true; },
+                deletePatient(id) { if (confirm('Supprimer ce patient?')) window.db.collection('patients').doc(id).delete(); },
+
+                openAppointmentModal() { this.newApp = { patientName: '', patientPhone: '', service: '', dateTime: '' }; this.isEditAppMode = false; this.showAppointmentModal = true; },
+                saveAppointment() {
+                    if (!this.newApp.patientName) return;
+                    if (this.isEditAppMode) {
+                        window.db.collection('appointments').doc(this.newApp.id).update(this.newApp);
+                    } else {
+                        window.db.collection('appointments').add(this.newApp);
+                    }
+                    this.showAppointmentModal = false;
+                },
+                editAppointment(a) { this.newApp = { ...a }; this.isEditAppMode = true; this.showAppointmentModal = true; },
+                deleteAppointment(id) { if (confirm('Annuler ce RDV?')) window.db.collection('appointments').doc(id).delete(); },
+
+                openFinanceModal() { this.newTx = { patientName: '', service: '', amount: 0, date: new Date().toISOString().split('T')[0] }; this.isEditFinanceMode = false; this.showFinanceModal = true; },
+                saveFinance() {
+                    if (!this.newTx.patientName) return;
+                    if (this.isEditFinanceMode) {
+                        window.db.collection('finances').doc(this.newTx.id).update(this.newTx);
+                    } else {
+                        window.db.collection('finances').add(this.newTx);
+                    }
+                    this.showFinanceModal = false;
+                },
+                editFinance(f) { this.newTx = { ...f }; this.isEditFinanceMode = true; this.showFinanceModal = true; },
+                deleteFinance(id) { if (confirm('Supprimer?')) window.db.collection('finances').doc(id).delete(); },
+
+                sendWhatsAppRappel(app) {
+                    if (!app.patientPhone) return alert("Pas de numéro");
+                    const msg = `Bonjour ${app.patientName}, nous vous rappelons votre RDV au cabinet dentaire le ${app.dateTime}. Merci!`;
+                    window.open(`https://wa.me/${app.patientPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                },
+
+                exportPatientsExcel() {
+                    const ws = XLSX.utils.json_to_sheet(this.patients);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Patients");
+                    XLSX.writeFile(wb, "Patients_Clinic.xlsx");
+                },
+
+                exportFinanceExcel() {
+                    const ws = XLSX.utils.json_to_sheet(this.finances);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Finances");
+                    XLSX.writeFile(wb, "Finances_Clinic.xlsx");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
