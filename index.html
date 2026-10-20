@@ -221,7 +221,7 @@
                         <button @click="openAppointmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Nouveau Rendez-vous</button>
                     </div>
 
-                    <!-- 📅 الأجندة والتقويم الروزنامي -->
+                    <!-- 📅 التقويم التفاعلي -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border space-y-4">
                         <div class="flex items-center justify-between border-b pb-3">
                             <button @click="changeMonth(-1)" class="bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-lg text-sm font-bold">◀ Précédent</button>
@@ -247,7 +247,7 @@
                         </div>
                     </div>
 
-                    <!-- قائمة مواعيد اليوم المحدد -->
+                    <!-- مواعيد اليوم المحدد -->
                     <div class="bg-white rounded-xl shadow-sm border p-4 space-y-3">
                         <h3 class="text-sm font-bold text-slate-800 border-b pb-2">
                             Rendez-vous du <span class="text-blue-600" x-text="selectedDateFormatted"></span>
@@ -391,7 +391,7 @@
 
     <!-- Modals (النوافذ المنبثقة) -->
 
-    <!-- 💬 Modal الشات والدردشة الداخلية -->
+    <!-- 💬 Modal الشات والدردشة الداخلية مع زر الحذف -->
     <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
             <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
@@ -405,11 +405,23 @@
                 <button @click="showChatModal = false" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
             </div>
 
+            <!-- قائمة الرسائل مع زر الحذف -->
             <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
                 <template x-for="msg in messages" :key="msg.id">
                     <div :class="msg.senderEmail === currentUserEmail ? 'text-right' : 'text-left'">
-                        <div :class="msg.senderEmail === currentUserEmail ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl ml-auto' : 'bg-white border text-slate-800 rounded-r-xl rounded-tl-xl'" class="inline-block p-3 max-w-[80%] text-xs shadow-sm">
-                            <div class="font-bold text-[10px] opacity-75 mb-0.5" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨‍⚕️' : 'Secrétaire 📋'"></div>
+                        <div :class="msg.senderEmail === currentUserEmail ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl ml-auto' : 'bg-white border text-slate-800 rounded-r-xl rounded-tl-xl'" class="inline-block p-3 max-w-[80%] text-xs shadow-sm relative group">
+                            
+                            <div class="flex justify-between items-center gap-3 mb-0.5">
+                                <span class="font-bold text-[10px] opacity-75" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨‍⚕️' : 'Secrétaire 📋'"></span>
+                                
+                                <!-- زر الحذف للرسائل الخاصة بك أو صلاحية الطبيبة -->
+                                <template x-if="msg.senderEmail === currentUserEmail || userRole === 'doctor'">
+                                    <button @click="deleteChatMessage(msg.id)" title="Supprimer le message" class="text-red-300 hover:text-red-100 font-bold text-[10px] ml-2">
+                                        🗑️
+                                    </button>
+                                </template>
+                            </div>
+
                             <div class="leading-relaxed" x-text="msg.text"></div>
                             <div class="text-[9px] opacity-60 text-right mt-1" x-text="msg.time"></div>
                         </div>
@@ -732,14 +744,13 @@
                 },
 
                 triggerNotification(msg) {
-                    // 1. صوت التنبيه
                     try {
                         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
                         const gainNode = audioCtx.createGain();
 
                         oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime); // Note E5
+                        oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime);
                         gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
 
                         oscillator.connect(gainNode);
@@ -751,12 +762,19 @@
                         console.log("Audio notification block: ", e);
                     }
 
-                    // 2. إشعار منبثق للمتصفح
                     if ("Notification" in window && Notification.permission === "granted") {
                         const title = msg.senderRole === 'doctor' ? 'Nouveau message du Médecin 👨‍⚕️' : 'Nouveau message de la Secrétaire 📋';
                         new Notification(title, {
                             body: msg.text,
                             icon: 'https://cdn-icons-png.flaticon.com/512/2818/2818366.png'
+                        });
+                    }
+                },
+
+                deleteChatMessage(msgId) {
+                    if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
+                        window.db.collection('chat').doc(msgId).delete().catch(err => {
+                            alert("Erreur: " + err.message);
                         });
                     }
                 },
@@ -872,10 +890,8 @@
                     const amountPaidNow = Number(this.newTrancheAmount);
                     const newPaidTotal = (Number(this.selectedPatientForHistory.paidAmount) || 0) + amountPaidNow;
                     
-                    // 1. تحديث إجمالي المدفوعات للمريض
                     window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaidTotal });
                     
-                    // 2. تسجيل العملية المالية في سجل المداخيل بتاريخ اليوم الفوري
                     const todayStr = new Date().toISOString().split('T')[0];
                     window.db.collection('finances').add({
                         patientName: this.selectedPatientForHistory.name,
@@ -1006,7 +1022,6 @@
                         window.db.collection('patients').doc(this.newPatient.id).update(patientData);
                     } else {
                         window.db.collection('patients').add(patientData);
-                        // إذا قام بإضافة مبلغ مدفوع عند إنشاء المريض لأول مرة، يُسجل في المالية تلقائياً
                         if (patientData.paidAmount > 0) {
                             const todayStr = new Date().toISOString().split('T')[0];
                             window.db.collection('finances').add({
