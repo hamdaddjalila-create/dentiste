@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cabinet de médecine et de chirurgie dentaire</title>
+    <title>Cabinet de médecine et de chirurgie dentaire - Dr. DIBOUNE Amina</title>
     
     <!-- Paramètres PWA -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -23,7 +23,7 @@
     <!-- SheetJS CDN (Export Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Firebase Scripts (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -32,6 +32,7 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .font-arabic { font-family: 'Amiri', serif; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800" x-data="clinicApp()" x-init="initApp()">
@@ -41,8 +42,9 @@
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center">
             <div class="text-5xl">🦷</div>
             <div>
-                <h2 class="text-2xl font-bold text-slate-800">Cabinet de médecine et de chirurgie dentaire</h2>
-                <p class="text-sm text-gray-500 mt-1">Connexion sécurisée au système du cabinet</p>
+                <h2 class="text-xl font-bold text-slate-800 font-arabic">عيادة طب وجراحة الأسنان</h2>
+                <h3 class="text-lg font-bold text-blue-700 font-arabic">د. ذيبون أمينة زوجة شمامي</h3>
+                <p class="text-xs text-gray-500 mt-1">Connexion sécurisée au système du cabinet</p>
             </div>
             
             <div class="space-y-4 text-left">
@@ -74,8 +76,9 @@
                 <div class="p-5 text-base font-bold border-b border-slate-800 flex items-center gap-2">
                     <span class="text-blue-400 text-2xl">🦷</span> 
                     <div>
-                        <div class="text-sm">Cabinet Dentaire</div>
-                        <div class="text-xs text-blue-400 font-normal" x-text="userRole === 'doctor' ? 'Rôle: Médecin 👨‍⚕️' : 'Rôle: Secrétaire 📋'"></div>
+                        <div class="text-sm font-arabic font-bold text-blue-300">د. ذيبون أمينة زوجة شمامي</div>
+                        <div class="text-[11px] text-gray-400">Cabinet Dentaire</div>
+                        <div class="text-xs text-emerald-400 font-normal mt-0.5" x-text="userRole === 'doctor' ? 'Rôle: Médecin 👨‍⚕️' : 'Rôle: Secrétaire 📋'"></div>
                     </div>
                 </div>
                 <nav class="p-4 space-y-2">
@@ -395,6 +398,43 @@
 
     <!-- Modals -->
 
+    <!-- 📄 Modal الوصفة الطبية (Ordonnance) -->
+    <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base font-bold text-slate-800">
+                    📄 Rédaction d'ordonnance: <span class="text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span>
+                </h3>
+                <button @click="showPrescriptionModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
+            </div>
+
+            <!-- الاختيارات السريعة للأدوية -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-700">Ajout rapide de médicaments:</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="drug in quickDrugs" :key="drug.name">
+                        <button @click="addDrugToPrescription(drug)" class="bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-2.5 py-1 rounded-lg text-xs font-medium border transition">
+                            + <span x-text="drug.name"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- نص الوصفة الطبية -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Contenu de l'ordonnance:</label>
+                <textarea x-model="prescriptionText" rows="7" placeholder="Rédigez la prescription ici..." class="w-full border p-3 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-xl text-xs font-bold">Fermer</button>
+                <button @click="printPrescription()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    <span>🖨️ Imprimer / طباعة</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 💬 Modal الشات -->
     <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
@@ -472,7 +512,7 @@
                     <template x-for="tx in patientInstallmentHistory" :key="tx.id">
                         <div class="p-2.5 flex justify-between items-center hover:bg-slate-50">
                             <div>
-                                <span class="font-bold text-slate-800 block" x-text="tx.service || 'Versment tranche'"></span>
+                                <span class="font-bold text-slate-800 block" x-text="tx.service || 'Versement tranche'"></span>
                                 <span class="text-[10px] text-gray-400 font-mono" x-text="tx.date"></span>
                             </div>
                             <div class="flex items-center gap-2">
@@ -638,9 +678,19 @@
                 showAppointmentModal: false,
                 showFinanceModal: false,
                 showPaymentHistoryModal: false,
+                showPrescriptionModal: false,
 
                 selectedPatientForHistory: null,
+                selectedPatientForRx: null,
+                prescriptionText: '',
                 newTrancheAmount: 0,
+
+                quickDrugs: [
+                    { name: 'Amoxicilline 1g', desc: '1 gélule 2 fois par jour pendant 7 jours' },
+                    { name: 'Paracétamol 1g', desc: '1 comprimé toutes les 8h si douleur' },
+                    { name: 'Ibuprofène 400mg', desc: '1 comprimé 3 fois par jour après le repas' },
+                    { name: 'Bain de bouche Chlorhexidine', desc: '2 rincages par jour après le brossage' }
+                ],
 
                 currentYear: new Date().getFullYear(),
                 currentMonth: new Date().getMonth(),
@@ -930,7 +980,6 @@
                 deleteInstallment(tx) {
                     if (!confirm(`Voulez-vous supprimer ce versement de ${tx.amount} DZD ?`)) return;
                     
-                    // خصم المبلغ من مجموع مدفوعات المريض
                     const currentPaid = Number(this.selectedPatientForHistory.paidAmount) || 0;
                     const updatedPaid = Math.max(0, currentPaid - Number(tx.amount));
                     
@@ -938,6 +987,64 @@
                     window.db.collection('finances').doc(tx.id).delete();
                     
                     this.selectedPatientForHistory.paidAmount = updatedPaid;
+                },
+
+                openPrescriptionModal(patient) {
+                    this.selectedPatientForRx = patient;
+                    this.prescriptionText = '';
+                    this.showPrescriptionModal = true;
+                },
+
+                addDrugToPrescription(drug) {
+                    this.prescriptionText += `- ${drug.name}: ${drug.desc}\n`;
+                },
+
+                printPrescription() {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html dir="rtl">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>Ordonnance - ${this.selectedPatientForRx?.name}</title>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+                                body { font-family: 'Amiri', serif; padding: 40px; color: #1e293b; }
+                                .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 30px; }
+                                .title-ar { font-size: 24px; font-weight: bold; color: #0f172a; margin: 0; }
+                                .doctor-name { font-size: 20px; font-weight: bold; color: #1d4ed8; margin-top: 5px; }
+                                .sub-title { font-size: 14px; color: #64748b; font-family: sans-serif; direction: ltr; margin-top: 5px; }
+                                .info-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 20px; direction: ltr; }
+                                .rx-body { min-height: 350px; font-family: sans-serif; font-size: 16px; line-height: 1.8; direction: ltr; text-align: left; }
+                                .footer { text-align: right; margin-top: 40px; font-weight: bold; font-size: 16px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                                <div class="title-ar">عيادة طب وجراحة الأسنان</div>
+                                <div class="doctor-name">د. ذيبون أمينة زوجة شمامي</div>
+                                <div class="sub-title">Cabinet de médecine et de chirurgie dentaire - Dr. DIBOUNE Amina ep. CHEMAMI</div>
+                            </div>
+                            
+                            <div class="info-row">
+                                <div><strong>Patient:</strong> ${this.selectedPatientForRx?.name || ''}</div>
+                                <div><strong>Date:</strong> ${new Date().toLocaleDateString('fr-FR')}</div>
+                            </div>
+
+                            <div style="font-family: sans-serif; font-weight: bold; font-size: 18px; margin-bottom: 15px; text-decoration: underline;">Ordonnance / الوصفة الطبية:</div>
+                            
+                            <div class="rx-body">
+                                <pre style="font-family: inherit; font-size: 16px; white-space: pre-wrap;">${this.prescriptionText}</pre>
+                            </div>
+
+                            <div class="footer">
+                                <div>Signature & Cachet / التوقيع والختم</div>
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
                 },
 
                 getMonthYearLabel() {
@@ -1108,6 +1215,12 @@
                     }
                 },
 
+                sendWhatsAppRappel(app) {
+                    if (!app.patientPhone) return alert("Pas de numéro");
+                    const msg = `Bonjour ${app.patientName}, nous vous rappelons votre RDV au cabinet dentaire le ${app.dateTime}. Merci!`;
+                    window.open(`https://wa.me/${app.patientPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                },
+
                 exportPatientsExcel() {
                     const ws = XLSX.utils.json_to_sheet(this.patients);
                     const wb = XLSX.utils.book_new();
@@ -1126,4 +1239,3 @@
     </script>
 </body>
 </html>
-
