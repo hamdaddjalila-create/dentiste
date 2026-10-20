@@ -489,7 +489,7 @@
                 <button @click="showPaymentHistoryModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
             </div>
             
-            <!-- الخلاصة المالية للمريض (المبلغ الإجمالي، المدفوع، المتبقي) -->
+            <!-- الخلاصة المالية للمريض -->
             <div class="grid grid-cols-3 gap-2 text-center text-xs bg-slate-50 p-3 rounded-xl border">
                 <div>
                     <span class="block text-gray-500 font-medium">Total Traitement</span>
@@ -505,7 +505,7 @@
                 </div>
             </div>
 
-            <!-- قائمة الأقساط والدفعات السابقة بالتاريخ والوقت -->
+            <!-- قائمة الأقساط والدفعات السابقة -->
             <div class="space-y-2">
                 <h4 class="text-xs font-bold text-slate-700">📜 Détail des versements / جدول الأقساط:</h4>
                 <div class="max-h-48 overflow-y-auto border rounded-xl divide-y text-xs">
@@ -1004,60 +1004,28 @@
                     const rxContent = this.prescriptionText || '';
                     const currentDate = new Date().toLocaleDateString('fr-FR');
 
-                    // فتح نافذة طباعة جديدة مضمونة التوافق مع المتصفحات والهواتف
                     const printWindow = window.open('', '_blank', 'width=800,height=600');
                     if (!printWindow) {
                         alert("Veuillez autoriser les fenêtres pop-up pour imprimer l'ordonnance.");
                         return;
                     }
 
-                    printWindow.document.write(`
-                        <!DOCTYPE html>
-                        <html dir="rtl">
-                        <head>
-                            <meta charset="UTF-8">
-                            <title>Ordonnance - ${patientName}</title>
-                            <style>
-                                @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
-                                body { font-family: 'Amiri', serif; padding: 40px; color: #1e293b; background: #fff; }
-                                .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 30px; }
-                                .title-ar { font-size: 24px; font-weight: bold; color: #0f172a; margin: 0; }
-                                .doctor-name { font-size: 20px; font-weight: bold; color: #1d4ed8; margin-top: 5px; }
-                                .sub-title { font-size: 13px; color: #64748b; font-family: sans-serif; direction: ltr; margin-top: 5px; }
-                                .info-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 20px; direction: ltr; font-family: sans-serif; }
-                                .rx-body { min-height: 300px; font-family: sans-serif; font-size: 16px; line-height: 1.8; direction: ltr; text-align: left; white-space: pre-wrap; }
-                                .footer { text-align: right; margin-top: 50px; font-weight: bold; font-size: 16px; font-family: sans-serif; }
-                            </style>
-                        </head>
-                        <body>
-                            <div class="header">
-                                <div class="title-ar">عيادة طب وجراحة الأسنان</div>
-                                <div class="doctor-name">د. ذيبون أمينة زوجة شمامي</div>
-                                <div class="sub-title">Cabinet de médecine et de chirurgie dentaire - Dr. DIBOUNE Amina ep. CHEMAMI</div>
-                            </div>
-                            
-                            <div class="info-row">
-                                <div><strong>Patient:</strong> ${patientName}</div>
-                                <div><strong>Date:</strong> ${currentDate}</div>
-                            </div>
+                    const html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>Ordonnance - ' + patientName + '</title>' +
+                        '<style>@import url("https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap"); body { font-family: "Amiri", serif; padding: 40px; color: #1e293b; background: #fff; } .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 30px; } .title-ar { font-size: 24px; font-weight: bold; color: #0f172a; margin: 0; } .doctor-name { font-size: 20px; font-weight: bold; color: #1d4ed8; margin-top: 5px; } .sub-title { font-size: 13px; color: #64748b; font-family: sans-serif; direction: ltr; margin-top: 5px; } .info-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 20px; direction: ltr; font-family: sans-serif; } .rx-body { min-height: 300px; font-family: sans-serif; font-size: 16px; line-height: 1.8; direction: ltr; text-align: left; white-space: pre-wrap; } .footer { text-align: right; margin-top: 50px; font-weight: bold; font-size: 16px; font-family: sans-serif; }</style></head><body>' +
+                        '<div class="header"><div class="title-ar">عيادة طب وجراحة الأسنان</div><div class="doctor-name">د. ذيبون أمينة زوجة شمامي</div><div class="sub-title">Cabinet de médecine et de chirurgie dentaire - Dr. DIBOUNE Amina ep. CHEMAMI</div></div>' +
+                        '<div class="info-row"><div><strong>Patient:</strong> ' + patientName + '</div><div><strong>Date:</strong> ' + currentDate + '</div></div>' +
+                        '<div style="font-family: sans-serif; font-weight: bold; font-size: 18px; margin-bottom: 15px; text-decoration: underline;">Ordonnance / الوصفة الطبية:</div>' +
+                        '<div class="rx-body">' + rxContent + '</div>' +
+                        '<div class="footer"><div>Signature & Cachet / التوقيع والختم</div></div>' +
+                        '</body></html>';
 
-                            <div style="font-family: sans-serif; font-weight: bold; font-size: 18px; margin-bottom: 15px; text-decoration: underline;">Ordonnance / الوصفة الطبية:</div>
-                            
-                            <div class="rx-body">${rxContent}</div>
-
-                            <div class="footer">
-                                <div>Signature & Cachet / التوقيع والختم</div>
-                            </div>
-
-                            <script>
-                                window.onload = function() {
-                                    window.print();
-                                };
-                            </script>
-                        </body>
-                        </html>
-                    `);
+                    printWindow.document.open();
+                    printWindow.document.write(html);
                     printWindow.document.close();
+                    
+                    setTimeout(() => {
+                        printWindow.print();
+                    }, 500);
                 },
 
                 getMonthYearLabel() {
