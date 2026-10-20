@@ -102,8 +102,9 @@
             <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-base md:text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
                 <div class="flex items-center gap-2 md:gap-3">
-                    <button @click="showChatModal = true" class="relative bg-blue-50 text-blue-700 hover:bg-blue-100 p-2 px-3 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-1.5 transition border border-blue-200">
+                    <button @click="openChatModal()" class="relative bg-blue-50 text-blue-700 hover:bg-blue-100 p-2 px-3 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-1.5 transition border border-blue-200">
                         💬 Messagerie Interne
+                        <span x-show="unreadCount > 0" class="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
                     </button>
                     <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs md:text-sm font-semibold" x-text="currentUserEmail"></span>
                     <button @click="logout()" class="md:hidden text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">Déconnexion</button>
@@ -381,8 +382,9 @@
             <button @click="currentTab = 'appointments'" :class="currentTab === 'appointments' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
                 <span>📅</span><span>Agenda</span>
             </button>
-            <button @click="showChatModal = true" class="p-2 flex flex-col items-center gap-1 text-blue-400 font-bold">
+            <button @click="openChatModal()" class="p-2 flex flex-col items-center gap-1 text-blue-400 font-bold relative">
                 <span>💬</span><span>Chat</span>
+                <span x-show="unreadCount > 0" class="absolute top-1 right-3 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
         </div>
     </div>
@@ -499,7 +501,7 @@
                         <input type="number" x-model="newPatient.totalCost" placeholder="Montant Total" class="w-full border p-2.5 rounded-lg text-sm">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Payé</label>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Payé initiale</label>
                         <input type="number" x-model="newPatient.paidAmount" placeholder="Montant Payé" class="w-full border p-2.5 rounded-lg text-sm">
                     </div>
                 </div>
@@ -540,32 +542,6 @@
             <div class="flex justify-end gap-2 pt-2">
                 <button @click="showFinanceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
                 <button @click="saveFinance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm" x-text="isEditFinanceMode ? 'Sauvegarder' : 'Enregistrer'"></button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Ordonnance -->
-    <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-slate-800">Établir une ordonnance médicale</h3>
-            <p class="text-xs text-gray-500">Patient: <span class="font-bold text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span></p>
-            
-            <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1.5">⚡ Ajouter un médicament rapidement:</label>
-                <div class="flex flex-wrap gap-1.5">
-                    <template x-for="drug in quickDrugs" :key="drug.name">
-                        <button @click="addDrugToPrescription(drug)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-2.5 py-1 rounded-lg text-xs border border-slate-300 font-semibold transition">+ <span x-text="drug.name"></span></button>
-                    </template>
-                </div>
-            </div>
-
-            <textarea x-model="prescriptionText" rows="7" placeholder="Rédigez les médicaments et les instructions ici..." class="w-full border p-3 rounded-xl text-sm font-mono leading-relaxed"></textarea>
-            
-            <div class="flex justify-between items-center pt-2">
-                <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
-                <button @click="printPrescription()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
-                    🖨️ Imprimer l'ordonnance
-                </button>
             </div>
         </div>
     </div>
@@ -615,6 +591,7 @@
 
                 assistantOnline: false,
                 showChatModal: false,
+                unreadCount: 0,
                 showPresenceModal: false,
                 editingPresence: { date: '', firstLogin: '', lastLogout: '' },
                 newMessageText: '',
@@ -657,6 +634,7 @@
                             this.currentUserEmail = user.email;
                             this.userRole = user.email.toLowerCase() === DOCTOR_EMAIL.toLowerCase() ? 'doctor' : 'assistant';
                             
+                            this.requestNotificationPermission();
                             this.recordPresence('login');
                             this.fetchData();
                             this.listenToPresenceAndChat();
@@ -670,6 +648,12 @@
                             this.recordPresence('logout');
                         }
                     });
+                },
+
+                requestNotificationPermission() {
+                    if ("Notification" in window && Notification.permission !== "granted") {
+                        Notification.requestPermission();
+                    }
                 },
 
                 login() {
@@ -710,6 +694,11 @@
                     }
                 },
 
+                openChatModal() {
+                    this.showChatModal = true;
+                    this.unreadCount = 0;
+                },
+
                 listenToPresenceAndChat() {
                     let initialLoad = true;
 
@@ -725,7 +714,10 @@
                         if (!initialLoad && newMessagesCount > this.messages.length) {
                             const lastMsg = snapshot.docs[snapshot.docs.length - 1].data();
                             if (lastMsg.senderEmail !== this.currentUserEmail) {
-                                this.playNotificationSound();
+                                if (!this.showChatModal) {
+                                    this.unreadCount++;
+                                }
+                                this.triggerNotification(lastMsg);
                             }
                         }
 
@@ -739,23 +731,33 @@
                     });
                 },
 
-                playNotificationSound() {
+                triggerNotification(msg) {
+                    // 1. صوت التنبيه
                     try {
                         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
                         const gainNode = audioCtx.createGain();
 
                         oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime); // Note E5
+                        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
 
                         oscillator.connect(gainNode);
                         gainNode.connect(audioCtx.destination);
 
                         oscillator.start();
-                        oscillator.stop(audioCtx.currentTime + 0.3);
+                        oscillator.stop(audioCtx.currentTime + 0.35);
                     } catch (e) {
-                        console.log("Audio alert error: ", e);
+                        console.log("Audio notification block: ", e);
+                    }
+
+                    // 2. إشعار منبثق للمتصفح
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        const title = msg.senderRole === 'doctor' ? 'Nouveau message du Médecin 👨‍⚕️' : 'Nouveau message de la Secrétaire 📋';
+                        new Notification(title, {
+                            body: msg.text,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/2818/2818366.png'
+                        });
                     }
                 },
 
@@ -848,15 +850,15 @@
                 },
 
                 todayRevenue() {
-                    const today = new Date().toISOString().split('T')[0];
+                    const todayStr = new Date().toISOString().split('T')[0];
                     return this.finances
-                        .filter(f => f.date === today)
+                        .filter(f => f.date === todayStr)
                         .reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
                 },
 
                 todayAppointmentsCount() {
-                    const today = new Date().toISOString().split('T')[0];
-                    return this.appointments.filter(a => a.dateTime && a.dateTime.startsWith(today)).length;
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    return this.appointments.filter(a => a.dateTime && a.dateTime.startsWith(todayStr)).length;
                 },
 
                 openPaymentHistoryModal(patient) {
@@ -867,20 +869,23 @@
 
                 addInstallment() {
                     if (!this.selectedPatientForHistory || this.newTrancheAmount <= 0) return;
-                    const newPaid = (Number(this.selectedPatientForHistory.paidAmount) || 0) + Number(this.newTrancheAmount);
+                    const amountPaidNow = Number(this.newTrancheAmount);
+                    const newPaidTotal = (Number(this.selectedPatientForHistory.paidAmount) || 0) + amountPaidNow;
                     
-                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaid });
+                    // 1. تحديث إجمالي المدفوعات للمريض
+                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaidTotal });
                     
+                    // 2. تسجيل العملية المالية في سجل المداخيل بتاريخ اليوم الفوري
                     const todayStr = new Date().toISOString().split('T')[0];
                     window.db.collection('finances').add({
                         patientName: this.selectedPatientForHistory.name,
                         service: 'Versement tranche / القسط',
-                        amount: Number(this.newTrancheAmount),
+                        amount: amountPaidNow,
                         date: todayStr,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    this.selectedPatientForHistory.paidAmount = newPaid;
+                    this.selectedPatientForHistory.paidAmount = newPaidTotal;
                     this.newTrancheAmount = 0;
                     alert("Paiement enregistré avec succès!");
                 },
@@ -987,10 +992,31 @@
                 openPatientModal() { this.newPatient = { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' }; this.isEditMode = false; this.showPatientModal = true; },
                 savePatient() {
                     if (!this.newPatient.name) return;
+                    
+                    const patientData = {
+                        name: this.newPatient.name,
+                        phone: this.newPatient.phone || '',
+                        age: this.newPatient.age || '',
+                        totalCost: Number(this.newPatient.totalCost) || 0,
+                        paidAmount: Number(this.newPatient.paidAmount) || 0,
+                        medicalHistory: this.newPatient.medicalHistory || ''
+                    };
+
                     if (this.isEditMode) {
-                        window.db.collection('patients').doc(this.newPatient.id).update(this.newPatient);
+                        window.db.collection('patients').doc(this.newPatient.id).update(patientData);
                     } else {
-                        window.db.collection('patients').add(this.newPatient);
+                        window.db.collection('patients').add(patientData);
+                        // إذا قام بإضافة مبلغ مدفوع عند إنشاء المريض لأول مرة، يُسجل في المالية تلقائياً
+                        if (patientData.paidAmount > 0) {
+                            const todayStr = new Date().toISOString().split('T')[0];
+                            window.db.collection('finances').add({
+                                patientName: patientData.name,
+                                service: 'Paiement initial / دفعة أولى',
+                                amount: patientData.paidAmount,
+                                date: todayStr,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
                     }
                     this.showPatientModal = false;
                 },
@@ -1026,11 +1052,18 @@
                     if (!this.newTx.patientName || !this.newTx.amount) return;
                     if (!this.newTx.date) this.newTx.date = new Date().toISOString().split('T')[0];
                     
+                    const txData = {
+                        patientName: this.newTx.patientName,
+                        service: this.newTx.service || 'Service dentaire',
+                        amount: Number(this.newTx.amount),
+                        date: this.newTx.date
+                    };
+
                     if (this.isEditFinanceMode) {
-                        window.db.collection('finances').doc(this.newTx.id).update(this.newTx);
+                        window.db.collection('finances').doc(this.newTx.id).update(txData);
                     } else {
                         window.db.collection('finances').add({
-                            ...this.newTx,
+                            ...txData,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
