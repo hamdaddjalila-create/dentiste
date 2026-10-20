@@ -102,7 +102,6 @@
             <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-base md:text-lg font-bold text-slate-700" x-text="getPageTitle()"></h1>
                 <div class="flex items-center gap-2 md:gap-3">
-                    <!-- 💬 زر الدردشة الداخلية -->
                     <button @click="showChatModal = true" class="relative bg-blue-50 text-blue-700 hover:bg-blue-100 p-2 px-3 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-1.5 transition border border-blue-200">
                         💬 Messagerie Interne
                     </button>
@@ -136,7 +135,6 @@
                             </div>
                             <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg">📅</div>
                         </div>
-                        <!-- 💵 زر وإحصائية الأرباح اليومية -->
                         <div class="bg-emerald-50 border-emerald-200 p-5 rounded-xl shadow-sm border flex items-center justify-between">
                             <div>
                                 <p class="text-xs text-emerald-700 font-bold">Recette du Jour (اليوم)</p>
@@ -175,7 +173,6 @@
                                     <th class="p-3 md:p-4">Téléphone / Âge</th>
                                     <th class="p-3 md:p-4" x-show="userRole === 'doctor'">Total / Payé</th>
                                     <th class="p-3 md:p-4" x-show="userRole === 'doctor'">Reste (Dette)</th>
-                                    <th class="p-3 md:p-4">Radio</th>
                                     <th class="p-3 md:p-4 text-center">Actions & Options</th>
                                 </tr>
                             </thead>
@@ -197,33 +194,23 @@
                                         <td class="p-3 md:p-4" x-show="userRole === 'doctor'">
                                             <span :class="(patient.totalCost - patient.paidAmount) > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="px-2.5 py-1 rounded-full text-xs font-bold" x-text="((patient.totalCost || 0) - (patient.paidAmount || 0)) + ' DZD'"></span>
                                         </td>
-                                        <td class="p-3 md:p-4">
-                                            <template x-if="patient.xrayUrl">
-                                                <button @click="viewXray(patient.xrayUrl)" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">🖼️ Afficher Radio</button>
-                                            </template>
-                                            <template x-if="!patient.xrayUrl">
-                                                <span class="text-gray-400 text-xs">Aucune</span>
-                                            </template>
-                                        </td>
                                         <td class="p-3 md:p-4 text-center space-x-1 space-y-1">
-                                            <!-- 💳 زر سجل الدفوعات المالية لكل مريض -->
                                             <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements</button>
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2 py-1 rounded-md text-xs hover:bg-slate-700">📄 Ordonnance</button>
-                                            <!-- ✏️ أزرار التعديل والحذف لحساب الطبيبة -->
                                             <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600 font-semibold">✏️ Modifier</button>
                                             <button x-show="userRole === 'doctor'" @click="deletePatient(patient.id)" class="bg-red-500 text-white px-2 py-1 rounded-md text-xs hover:bg-red-600 font-semibold">🗑️ Supprimer</button>
                                         </td>
                                     </tr>
                                 </template>
                                 <template x-if="filteredPatients.length === 0">
-                                    <tr><td colspan="6" class="p-6 text-center text-gray-400">Aucun patient trouvé.</td></tr>
+                                    <tr><td colspan="5" class="p-6 text-center text-gray-400">Aucun patient trouvé.</td></tr>
                                 </template>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- 3. Vue Rendez-vous & Agenda (أجندة المواعيد المربوطة) -->
+                <!-- 3. Vue Rendez-vous & Agenda -->
                 <div x-show="currentTab === 'appointments'" class="space-y-4 md:space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                         <div>
@@ -277,7 +264,7 @@
                                 <tbody class="divide-y text-xs">
                                     <template x-for="app in selectedDayAppointments" :key="app.id">
                                         <tr>
-                                            <td class="p-3 font-semibold text-slate-800" x-text="app.time + ' - ' + app.patientName"></td>
+                                            <td class="p-3 font-semibold text-slate-800" x-text="(app.time || '10:00') + ' - ' + app.patientName"></td>
                                             <td class="p-3 text-gray-600" x-text="app.patientPhone || 'N/A'"></td>
                                             <td class="p-3 text-gray-600" x-text="app.service"></td>
                                             <td class="p-3 text-center space-x-1">
@@ -323,7 +310,7 @@
                             <tbody class="divide-y text-xs md:text-sm">
                                 <template x-for="tx in finances" :key="tx.id">
                                     <tr>
-                                        <td class="p-3 md:p-4 text-gray-500" x-text="tx.date || 'Aujourd\'hui'"></td>
+                                        <td class="p-3 md:p-4 text-gray-500 font-mono" x-text="tx.date || 'Aujourd\'hui'"></td>
                                         <td class="p-3 md:p-4 font-semibold text-slate-800" x-text="tx.patientName"></td>
                                         <td class="p-3 md:p-4 text-gray-600" x-text="tx.service"></td>
                                         <td class="p-3 md:p-4 font-bold text-emerald-600" x-text="tx.amount + ' DZD'"></td>
@@ -338,7 +325,7 @@
                     </div>
                 </div>
 
-                <!-- 5. Vue Suivi de Présence Secrétaire (Pointage Quotidien) -->
+                <!-- 5. Vue Suivi de Présence Secrétaire -->
                 <div x-show="currentTab === 'presence' && userRole === 'doctor'" class="space-y-4 md:space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 gap-2">
                         <div>
@@ -549,6 +536,7 @@
             <input type="text" x-model="newTx.patientName" placeholder="Nom du Patient" class="w-full border p-2.5 rounded-lg text-sm">
             <input type="text" x-model="newTx.service" placeholder="Service fourni" class="w-full border p-2.5 rounded-lg text-sm">
             <input type="number" x-model="newTx.amount" placeholder="Montant (DZD)" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="date" x-model="newTx.date" class="w-full border p-2.5 rounded-lg text-sm">
             <div class="flex justify-end gap-2 pt-2">
                 <button @click="showFinanceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
                 <button @click="saveFinance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm" x-text="isEditFinanceMode ? 'Sauvegarder' : 'Enregistrer'"></button>
@@ -723,6 +711,8 @@
                 },
 
                 listenToPresenceAndChat() {
+                    let initialLoad = true;
+
                     window.db.collection('status').doc('assistant').onSnapshot(doc => {
                         if (doc.exists) {
                             this.assistantOnline = doc.data().isOnline;
@@ -730,13 +720,43 @@
                     });
 
                     window.db.collection('chat').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+                        const newMessagesCount = snapshot.docs.length;
+                        
+                        if (!initialLoad && newMessagesCount > this.messages.length) {
+                            const lastMsg = snapshot.docs[snapshot.docs.length - 1].data();
+                            if (lastMsg.senderEmail !== this.currentUserEmail) {
+                                this.playNotificationSound();
+                            }
+                        }
+
                         this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        initialLoad = false;
                     });
 
                     window.db.collection('presence_logs').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
                         this.rawPresenceLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         this.processGroupedPresence();
                     });
+                },
+
+                playNotificationSound() {
+                    try {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+
+                        oscillator.start();
+                        oscillator.stop(audioCtx.currentTime + 0.3);
+                    } catch (e) {
+                        console.log("Audio alert error: ", e);
+                    }
                 },
 
                 processGroupedPresence() {
@@ -851,16 +871,18 @@
                     
                     window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaid });
                     
-                    const today = new Date().toISOString().split('T')[0];
+                    const todayStr = new Date().toISOString().split('T')[0];
                     window.db.collection('finances').add({
                         patientName: this.selectedPatientForHistory.name,
-                        service: 'Versement tranche',
+                        service: 'Versement tranche / القسط',
                         amount: Number(this.newTrancheAmount),
-                        date: today
+                        date: todayStr,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
                     this.selectedPatientForHistory.paidAmount = newPaid;
                     this.newTrancheAmount = 0;
+                    alert("Paiement enregistré avec succès!");
                 },
 
                 openPrescriptionModal(patient) {
@@ -938,7 +960,10 @@
                 get selectedDayAppointments() {
                     return this.appointments
                         .filter(a => a.dateTime && a.dateTime.startsWith(this.selectedDateStr))
-                        .map(a => ({ ...a, time: a.dateTime.split('T')[1] || '' }));
+                        .map(a => {
+                            const timePart = a.dateTime.includes('T') ? a.dateTime.split('T')[1] : '';
+                            return { ...a, time: timePart };
+                        });
                 },
 
                 get selectedDateFormatted() {
@@ -972,13 +997,24 @@
                 editPatient(p) { this.newPatient = { ...p }; this.isEditMode = true; this.showPatientModal = true; },
                 deletePatient(id) { if (confirm('Supprimer ce patient?')) window.db.collection('patients').doc(id).delete(); },
 
-                openAppointmentModal() { this.newApp = { patientName: '', patientPhone: '', service: '', dateTime: '' }; this.isEditAppMode = false; this.showAppointmentModal = true; },
+                openAppointmentModal() { 
+                    const nowIso = new Date().toISOString().slice(0, 16);
+                    this.newApp = { patientName: '', patientPhone: '', service: '', dateTime: nowIso }; 
+                    this.isEditAppMode = false; 
+                    this.showAppointmentModal = true; 
+                },
                 saveAppointment() {
-                    if (!this.newApp.patientName) return;
+                    if (!this.newApp.patientName || !this.newApp.dateTime) {
+                        alert("Veuillez remplir le nom et la date du rendez-vous.");
+                        return;
+                    }
                     if (this.isEditAppMode) {
                         window.db.collection('appointments').doc(this.newApp.id).update(this.newApp);
                     } else {
-                        window.db.collection('appointments').add(this.newApp);
+                        window.db.collection('appointments').add({
+                            ...this.newApp,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
                     }
                     this.showAppointmentModal = false;
                 },
@@ -987,11 +1023,16 @@
 
                 openFinanceModal() { this.newTx = { patientName: '', service: '', amount: 0, date: new Date().toISOString().split('T')[0] }; this.isEditFinanceMode = false; this.showFinanceModal = true; },
                 saveFinance() {
-                    if (!this.newTx.patientName) return;
+                    if (!this.newTx.patientName || !this.newTx.amount) return;
+                    if (!this.newTx.date) this.newTx.date = new Date().toISOString().split('T')[0];
+                    
                     if (this.isEditFinanceMode) {
                         window.db.collection('finances').doc(this.newTx.id).update(this.newTx);
                     } else {
-                        window.db.collection('finances').add(this.newTx);
+                        window.db.collection('finances').add({
+                            ...this.newTx,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
                     }
                     this.showFinanceModal = false;
                 },
