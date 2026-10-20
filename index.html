@@ -439,38 +439,61 @@
         </div>
     </div>
 
-    <!-- 💳 Modal الأقساط -->
-    <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-slate-800 border-b pb-2">
-                Historique Financier: <span class="text-blue-600" x-text="selectedPatientForHistory ? selectedPatientForHistory.name : ''"></span>
-            </h3>
+    <!-- 💳 Modal سجل الأقساط والمدفوعات بالتفصيل والتاريخ -->
+    <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base font-bold text-slate-800">
+                    📂 Historique Financier: <span class="text-blue-600" x-text="selectedPatientForHistory ? selectedPatientForHistory.name : ''"></span>
+                </h3>
+                <button @click="showPaymentHistoryModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
+            </div>
             
-            <div class="grid grid-cols-3 gap-2 text-center text-xs bg-slate-50 p-3 rounded-lg border">
+            <!-- الخلاصة المالية للمريض (المبلغ الإجمالي، المدفوع، المتبقي) -->
+            <div class="grid grid-cols-3 gap-2 text-center text-xs bg-slate-50 p-3 rounded-xl border">
                 <div>
-                    <span class="block text-gray-500">Total Traitement</span>
-                    <span class="font-bold text-slate-800" x-text="(selectedPatientForHistory?.totalCost || 0) + ' DZD'"></span>
+                    <span class="block text-gray-500 font-medium">Total Traitement</span>
+                    <span class="font-bold text-slate-800 text-sm" x-text="(selectedPatientForHistory?.totalCost || 0) + ' DZD'"></span>
                 </div>
                 <div>
-                    <span class="block text-gray-500">Total Payé</span>
-                    <span class="font-bold text-emerald-600" x-text="(selectedPatientForHistory?.paidAmount || 0) + ' DZD'"></span>
+                    <span class="block text-gray-500 font-medium">Total Payé</span>
+                    <span class="font-bold text-emerald-600 text-sm" x-text="(selectedPatientForHistory?.paidAmount || 0) + ' DZD'"></span>
                 </div>
                 <div>
-                    <span class="block text-gray-500">Reste (Dette)</span>
-                    <span class="font-bold text-red-600" x-text="((selectedPatientForHistory?.totalCost || 0) - (selectedPatientForHistory?.paidAmount || 0)) + ' DZD'"></span>
+                    <span class="block text-gray-500 font-medium">Reste (Dette)</span>
+                    <span class="font-bold text-red-600 text-sm" x-text="((selectedPatientForHistory?.totalCost || 0) - (selectedPatientForHistory?.paidAmount || 0)) + ' DZD'"></span>
                 </div>
             </div>
 
+            <!-- قائمة الأقساط والدفعات السابقة بالتاريخ والوقت -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-700">📜 Détail des versements / جدول الأقساط:</h4>
+                <div class="max-h-48 overflow-y-auto border rounded-xl divide-y text-xs">
+                    <template x-for="tx in patientInstallmentHistory" :key="tx.id">
+                        <div class="p-2.5 flex justify-between items-center hover:bg-slate-50">
+                            <div>
+                                <span class="font-bold text-slate-800 block" x-text="tx.service || 'Versment tranche'"></span>
+                                <span class="text-[10px] text-gray-400 font-mono" x-text="tx.date"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-emerald-600" x-text="tx.amount + ' DZD'"></span>
+                                <button @click="deleteInstallment(tx)" class="text-red-400 hover:text-red-600 font-bold text-xs" title="Supprimer ce versement">🗑️</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="patientInstallmentHistory.length === 0">
+                        <div class="p-4 text-center text-gray-400 text-xs">Aucun versement enregistré.</div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- إدخال قسط جديد -->
             <div class="border-t pt-3 space-y-2">
-                <h4 class="text-xs font-bold text-slate-700">+ Ajouter une tranche / verser un acompte:</h4>
+                <h4 class="text-xs font-bold text-slate-700">+ Verser une nouvelle tranche / إضافة قسط:</h4>
                 <div class="flex gap-2">
-                    <input type="number" x-model="newTrancheAmount" placeholder="Montant (DZD)" class="border p-2 rounded-lg text-xs flex-1">
-                    <button @click="addInstallment()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Enregistrer</button>
+                    <input type="number" x-model="newTrancheAmount" placeholder="Montant (DZD)" class="border p-2.5 rounded-xl text-xs flex-1 outline-none focus:ring-2 focus:ring-blue-500">
+                    <button @click="addInstallment()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition">Enregistrer 💾</button>
                 </div>
-            </div>
-
-            <div class="flex justify-end pt-2">
-                <button @click="showPaymentHistoryModal = false" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs">Fermer</button>
             </div>
         </div>
     </div>
@@ -512,11 +535,11 @@
                 <label class="block text-xs font-semibold text-slate-700">Plan de paiement (DZD):</label>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Total</label>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Total (الإجمالي)</label>
                         <input type="number" x-model="newPatient.totalCost" placeholder="Montant Total" class="w-full border p-2.5 rounded-lg text-sm">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Payé initiale</label>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Payé initiale (الدفعة الأولى)</label>
                         <input type="number" x-model="newPatient.paidAmount" placeholder="Montant Payé" class="w-full border p-2.5 rounded-lg text-sm">
                     </div>
                 </div>
@@ -615,19 +638,9 @@
                 showAppointmentModal: false,
                 showFinanceModal: false,
                 showPaymentHistoryModal: false,
-                showPrescriptionModal: false,
 
                 selectedPatientForHistory: null,
-                selectedPatientForRx: null,
-                prescriptionText: '',
                 newTrancheAmount: 0,
-
-                quickDrugs: [
-                    { name: 'Amoxicilline 1g', desc: '1 gélule 2 fois par jour pendant 7 jours' },
-                    { name: 'Paracétamol 1g', desc: '1 comprimé toutes les 8h si douleur' },
-                    { name: 'Ibuprofène 400mg', desc: '1 comprimé 3 fois par jour après le repas' },
-                    { name: 'Bain de bouche Chlorhexidine', desc: '2 rincages par jour après le brossage' }
-                ],
 
                 currentYear: new Date().getFullYear(),
                 currentMonth: new Date().getMonth(),
@@ -888,6 +901,11 @@
                     this.showPaymentHistoryModal = true;
                 },
 
+                get patientInstallmentHistory() {
+                    if (!this.selectedPatientForHistory) return [];
+                    return this.finances.filter(f => f.patientId === this.selectedPatientForHistory.id || f.patientName === this.selectedPatientForHistory.name);
+                },
+
                 addInstallment() {
                     if (!this.selectedPatientForHistory || this.newTrancheAmount <= 0) return;
                     const amountPaidNow = Number(this.newTrancheAmount);
@@ -907,39 +925,19 @@
 
                     this.selectedPatientForHistory.paidAmount = newPaidTotal;
                     this.newTrancheAmount = 0;
-                    alert("Paiement enregistré avec succès!");
                 },
 
-                openPrescriptionModal(patient) {
-                    this.selectedPatientForRx = patient;
-                    this.prescriptionText = '';
-                    this.showPrescriptionModal = true;
-                },
-
-                addDrugToPrescription(drug) {
-                    this.prescriptionText += `- ${drug.name}: ${drug.desc}\n`;
-                },
-
-                printPrescription() {
-                    const printWindow = window.open('', '_blank');
-                    printWindow.document.write(`
-                        <html>
-                        <head><title>Ordonnance - ${this.selectedPatientForRx?.name}</title></head>
-                        <body style="font-family: Arial; padding: 40px;">
-                            <h2 style="text-align: center;">Cabinet de médecine et de chirurgie dentaire</h2>
-                            <hr><br>
-                            <p><strong>Patient:</strong> ${this.selectedPatientForRx?.name}</p>
-                            <p><strong>Date:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
-                            <br>
-                            <h3>Ordonnance:</h3>
-                            <pre style="font-family: inherit; font-size: 16px; line-height: 1.6;">${this.prescriptionText}</pre>
-                            <br><br><br>
-                            <p style="text-align: right;"><strong>Signature & Cachet</strong></p>
-                        </body>
-                        </html>
-                    `);
-                    printWindow.document.close();
-                    printWindow.print();
+                deleteInstallment(tx) {
+                    if (!confirm(`Voulez-vous supprimer ce versement de ${tx.amount} DZD ?`)) return;
+                    
+                    // خصم المبلغ من مجموع مدفوعات المريض
+                    const currentPaid = Number(this.selectedPatientForHistory.paidAmount) || 0;
+                    const updatedPaid = Math.max(0, currentPaid - Number(tx.amount));
+                    
+                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: updatedPaid });
+                    window.db.collection('finances').doc(tx.id).delete();
+                    
+                    this.selectedPatientForHistory.paidAmount = updatedPaid;
                 },
 
                 getMonthYearLabel() {
@@ -1045,10 +1043,7 @@
                 
                 deletePatient(patient) { 
                     if (confirm(`Supprimer le patient ${patient.name} et toutes ses transactions ?`)) {
-                        // 1. مسح المريض
                         window.db.collection('patients').doc(patient.id).delete();
-                        
-                        // 2. مسح كافة المعاملات المالية التابعة له تلقائياً
                         const txToDelete = this.finances.filter(f => f.patientId === patient.id || f.patientName === patient.name);
                         txToDelete.forEach(tx => {
                             window.db.collection('finances').doc(tx.id).delete();
@@ -1111,12 +1106,6 @@
                             window.db.collection('finances').doc(f.id).delete();
                         });
                     }
-                },
-
-                sendWhatsAppRappel(app) {
-                    if (!app.patientPhone) return alert("Pas de numéro");
-                    const msg = `Bonjour ${app.patientName}, nous vous rappelons votre RDV au cabinet dentaire le ${app.dateTime}. Merci!`;
-                    window.open(`https://wa.me/${app.patientPhone}?text=${encodeURIComponent(msg)}`, '_blank');
                 },
 
                 exportPatientsExcel() {
