@@ -199,7 +199,7 @@
                                             <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements</button>
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2 py-1 rounded-md text-xs hover:bg-slate-700">📄 Ordonnance</button>
                                             <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600 font-semibold">✏️ Modifier</button>
-                                            <button x-show="userRole === 'doctor'" @click="deletePatient(patient.id)" class="bg-red-500 text-white px-2 py-1 rounded-md text-xs hover:bg-red-600 font-semibold">🗑️ Supprimer</button>
+                                            <button x-show="userRole === 'doctor'" @click="deletePatient(patient)" class="bg-red-500 text-white px-2 py-1 rounded-md text-xs hover:bg-red-600 font-semibold">🗑️ Supprimer</button>
                                         </td>
                                     </tr>
                                 </template>
@@ -292,6 +292,7 @@
                             <p class="text-xs text-emerald-600 font-bold" x-text="'Recette Aujourd\'hui: ' + todayRevenue() + ' DZD'"></p>
                         </div>
                         <div class="flex gap-2">
+                            <button @click="clearAllFinances()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-1">🗑️ Réinitialiser tout</button>
                             <button @click="exportFinanceExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-1">📊 Excel</button>
                             <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Enregistrer Paiement</button>
                         </div>
@@ -320,6 +321,9 @@
                                             <button @click="deleteFinance(tx.id)" class="bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-red-600">🗑️ Supprimer</button>
                                         </td>
                                     </tr>
+                                </template>
+                                <template x-if="finances.length === 0">
+                                    <tr><td colspan="5" class="p-6 text-center text-gray-400">Aucune transaction enregistrée.</td></tr>
                                 </template>
                             </tbody>
                         </table>
@@ -389,9 +393,9 @@
         </div>
     </div>
 
-    <!-- Modals (النوافذ المنبثقة) -->
+    <!-- Modals -->
 
-    <!-- 💬 Modal الشات والدردشة الداخلية مع زر الحذف -->
+    <!-- 💬 Modal الشات -->
     <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
             <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
@@ -414,7 +418,6 @@
                             <div class="flex justify-between items-center gap-3 mb-0.5">
                                 <span class="font-bold text-[10px] opacity-75" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨‍⚕️' : 'Secrétaire 📋'"></span>
                                 
-                                <!-- زر الحذف للرسائل الخاصة بك أو صلاحية الطبيبة -->
                                 <template x-if="msg.senderEmail === currentUserEmail || userRole === 'doctor'">
                                     <button @click="deleteChatMessage(msg.id)" title="Supprimer le message" class="text-red-300 hover:text-red-100 font-bold text-[10px] ml-2">
                                         🗑️
@@ -436,7 +439,7 @@
         </div>
     </div>
 
-    <!-- 💳 Modal سجل الأقساط والمدفوعات المال لكل مريض -->
+    <!-- 💳 Modal الأقساط -->
     <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-slate-800 border-b pb-2">
@@ -894,6 +897,7 @@
                     
                     const todayStr = new Date().toISOString().split('T')[0];
                     window.db.collection('finances').add({
+                        patientId: this.selectedPatientForHistory.id,
                         patientName: this.selectedPatientForHistory.name,
                         service: 'Versement tranche / القسط',
                         amount: amountPaidNow,
@@ -1021,22 +1025,36 @@
                     if (this.isEditMode) {
                         window.db.collection('patients').doc(this.newPatient.id).update(patientData);
                     } else {
-                        window.db.collection('patients').add(patientData);
-                        if (patientData.paidAmount > 0) {
-                            const todayStr = new Date().toISOString().split('T')[0];
-                            window.db.collection('finances').add({
-                                patientName: patientData.name,
-                                service: 'Paiement initial / دفعة أولى',
-                                amount: patientData.paidAmount,
-                                date: todayStr,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        }
+                        window.db.collection('patients').add(patientData).then(docRef => {
+                            if (patientData.paidAmount > 0) {
+                                const todayStr = new Date().toISOString().split('T')[0];
+                                window.db.collection('finances').add({
+                                    patientId: docRef.id,
+                                    patientName: patientData.name,
+                                    service: 'Paiement initial / دفعة أولى',
+                                    amount: patientData.paidAmount,
+                                    date: todayStr,
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        });
                     }
                     this.showPatientModal = false;
                 },
                 editPatient(p) { this.newPatient = { ...p }; this.isEditMode = true; this.showPatientModal = true; },
-                deletePatient(id) { if (confirm('Supprimer ce patient?')) window.db.collection('patients').doc(id).delete(); },
+                
+                deletePatient(patient) { 
+                    if (confirm(`Supprimer le patient ${patient.name} et toutes ses transactions ?`)) {
+                        // 1. مسح المريض
+                        window.db.collection('patients').doc(patient.id).delete();
+                        
+                        // 2. مسح كافة المعاملات المالية التابعة له تلقائياً
+                        const txToDelete = this.finances.filter(f => f.patientId === patient.id || f.patientName === patient.name);
+                        txToDelete.forEach(tx => {
+                            window.db.collection('finances').doc(tx.id).delete();
+                        });
+                    } 
+                },
 
                 openAppointmentModal() { 
                     const nowIso = new Date().toISOString().slice(0, 16);
@@ -1085,7 +1103,15 @@
                     this.showFinanceModal = false;
                 },
                 editFinance(f) { this.newTx = { ...f }; this.isEditFinanceMode = true; this.showFinanceModal = true; },
-                deleteFinance(id) { if (confirm('Supprimer?')) window.db.collection('finances').doc(id).delete(); },
+                deleteFinance(id) { if (confirm('Supprimer cette transaction ?')) window.db.collection('finances').doc(id).delete(); },
+                
+                clearAllFinances() {
+                    if (confirm("Voulez-vous vraiment tacher et réinitialiser TOUS les registres financiers à ZERO (0 DZD) ?")) {
+                        this.finances.forEach(f => {
+                            window.db.collection('finances').doc(f.id).delete();
+                        });
+                    }
+                },
 
                 sendWhatsAppRappel(app) {
                     if (!app.patientPhone) return alert("Pas de numéro");
@@ -1111,3 +1137,4 @@
     </script>
 </body>
 </html>
+
