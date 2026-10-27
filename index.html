@@ -15,7 +15,6 @@
     
     <!-- Web App Manifest -->
     <link rel="manifest" href='data:application/manifest+json,{"name":"Cabinet de médecine et de chirurgie dentaire","short_name":"Cabinet Dentaire","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2818/2818366.png","sizes":"512x512","type":"image/png"}]}'>
-
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js CDN -->
@@ -29,14 +28,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <style>
         body { font-family: 'Inter', sans-serif; }
         .font-arabic { font-family: 'Amiri', serif; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800" x-data="clinicApp()" x-init="initApp()">
-
     <!-- Écran de Connexion (Login) -->
     <div x-show="!isLoggedIn" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl space-y-6 text-center">
@@ -57,16 +54,13 @@
                     <input type="password" x-model="loginPassword" placeholder="••••••••" class="w-full border p-3 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
             </div>
-
             <div x-show="authError" class="text-red-500 text-xs font-semibold bg-red-50 p-3 rounded-xl border border-red-200" x-text="authError"></div>
-
             <button @click="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
                 <span x-show="!loadingAuth">Se connecter</span>
                 <span x-show="loadingAuth">Vérification en cours... ⏳</span>
             </button>
         </div>
     </div>
-
     <!-- Disposition Principale (Main App Layout) -->
     <div x-show="isLoggedIn" class="flex h-screen overflow-hidden pb-16 md:pb-0">
         
@@ -78,7 +72,7 @@
                     <div>
                         <div class="text-sm font-arabic font-bold text-blue-300">د. ذيبون أمينة زوجة شمامي</div>
                         <div class="text-[11px] text-gray-400">Cabinet Dentaire</div>
-                        <div class="text-xs text-emerald-400 font-normal mt-0.5" x-text="userRole === 'doctor' ? 'Rôle: Médecin 👨⚕️' : 'Rôle: Secrétaire 📋'"></div>
+                        <div class="text-xs text-emerald-400 font-normal mt-0.5" x-text="userRole === 'doctor' ? 'Rôle: Médecin 👨‍⚕️' : 'Rôle: Secrétaire 📋'"></div>
                     </div>
                 </div>
                 <nav class="p-4 space-y-2">
@@ -97,7 +91,6 @@
                 <button @click="logout()" class="text-red-400 hover:underline font-bold">Déconnexion</button>
             </div>
         </aside>
-
         <!-- Zone de contenu principal -->
         <div class="flex-1 flex flex-col overflow-y-auto">
             
@@ -113,12 +106,10 @@
                     <button @click="logout()" class="md:hidden text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">Déconnexion</button>
                 </div>
             </header>
-
             <!-- Indicateur de chargement -->
             <div x-show="loadingData" class="p-4 bg-amber-50 text-amber-800 text-center text-sm font-semibold">
                 Synchronisation des données avec le Cloud... ☁️
             </div>
-
             <!-- Vues dynamiques -->
             <main class="p-4 md:p-6" x-show="!loadingData">
                 
@@ -156,7 +147,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- 2. Vue Patients -->
                 <div x-show="currentTab === 'patients'" class="space-y-4 md:space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
@@ -168,7 +158,6 @@
                             <button @click="openPatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Ajouter Patient</button>
                         </div>
                     </div>
-
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[800px]">
                             <thead>
@@ -199,7 +188,7 @@
                                             <span :class="(patient.totalCost - patient.paidAmount) > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="px-2.5 py-1 rounded-full text-xs font-bold" x-text="((patient.totalCost || 0) - (patient.paidAmount || 0)) + ' DZD'"></span>
                                         </td>
                                         <td class="p-3 md:p-4 text-center space-x-1 space-y-1">
-                                            <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements</button>
+                                            <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements & Tranches</button>
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2 py-1 rounded-md text-xs hover:bg-slate-700">📄 Ordonnance</button>
                                             <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600 font-semibold">✏️ Modifier</button>
                                             <button x-show="userRole === 'doctor'" @click="deletePatient(patient)" class="bg-red-500 text-white px-2 py-1 rounded-md text-xs hover:bg-red-600 font-semibold">🗑️ Supprimer</button>
@@ -213,7 +202,6 @@
                         </table>
                     </div>
                 </div>
-
                 <!-- 3. Vue Rendez-vous & Agenda -->
                 <div x-show="currentTab === 'appointments'" class="space-y-4 md:space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
@@ -223,7 +211,6 @@
                         </div>
                         <button @click="openAppointmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Nouveau Rendez-vous</button>
                     </div>
-
                     <!-- 📅 التقويم التفاعلي -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border space-y-4">
                         <div class="flex items-center justify-between border-b pb-3">
@@ -231,7 +218,6 @@
                             <h3 class="text-base font-bold text-blue-700" x-text="getMonthYearLabel()"></h3>
                             <button @click="changeMonth(1)" class="bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-lg text-sm font-bold">Suivant ▶</button>
                         </div>
-
                         <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-gray-500">
                             <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
                         </div>
@@ -249,7 +235,6 @@
                             </template>
                         </div>
                     </div>
-
                     <!-- مواعيد اليوم المحدد -->
                     <div class="bg-white rounded-xl shadow-sm border p-4 space-y-3">
                         <h3 class="text-sm font-bold text-slate-800 border-b pb-2">
@@ -286,7 +271,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- 4. Vue Finances (Doctor Only) -->
                 <div x-show="currentTab === 'finance' && userRole === 'doctor'" class="space-y-4 md:space-y-6">
                     <div class="flex justify-between items-center gap-2">
@@ -300,7 +284,6 @@
                             <button @click="openFinanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition">+ Enregistrer Paiement</button>
                         </div>
                     </div>
-
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[500px]">
                             <thead>
@@ -332,7 +315,6 @@
                         </table>
                     </div>
                 </div>
-
                 <!-- 5. Vue Suivi de Présence Secrétaire -->
                 <div x-show="currentTab === 'presence' && userRole === 'doctor'" class="space-y-4 md:space-y-6">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 gap-2">
@@ -347,7 +329,6 @@
                             <button @click="openPresenceEditModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Ajouter / Modifier Horaires</button>
                         </div>
                     </div>
-
                     <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-[650px]">
                             <thead>
@@ -374,10 +355,8 @@
                         </table>
                     </div>
                 </div>
-
             </main>
         </div>
-
         <!-- Navigation mobile -->
         <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white flex justify-around p-2 border-t border-slate-800 z-40 text-center text-xs">
             <button x-show="userRole === 'doctor'" @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'text-blue-400 font-bold' : 'text-gray-400'" class="p-2 flex flex-col items-center gap-1">
@@ -395,9 +374,7 @@
             </button>
         </div>
     </div>
-
     <!-- Modals -->
-
     <!-- 📄 Modal الوصفة الطبية (Ordonnance) -->
     <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
@@ -407,7 +384,6 @@
                 </h3>
                 <button @click="showPrescriptionModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
             </div>
-
             <!-- الاختيارات السريعة للأدوية -->
             <div class="space-y-2">
                 <label class="block text-xs font-bold text-slate-700">Ajout rapide de médicaments:</label>
@@ -419,13 +395,11 @@
                     </template>
                 </div>
             </div>
-
             <!-- نص الوصفة الطبية -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Contenu de l'ordonnance:</label>
                 <textarea x-model="prescriptionText" rows="7" placeholder="Rédigez la prescription ici..." class="w-full border p-3 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed"></textarea>
             </div>
-
             <div class="flex justify-end gap-2 pt-2 border-t">
                 <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-xl text-xs font-bold">Fermer</button>
                 <button @click="printPrescription()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
@@ -434,7 +408,6 @@
             </div>
         </div>
     </div>
-
     <!-- 💬 Modal الشات -->
     <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
@@ -448,7 +421,6 @@
                 </div>
                 <button @click="showChatModal = false" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
             </div>
-
             <!-- قائمة الرسائل مع زر الحذف -->
             <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
                 <template x-for="msg in messages" :key="msg.id">
@@ -456,7 +428,7 @@
                         <div :class="msg.senderEmail === currentUserEmail ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl ml-auto' : 'bg-white border text-slate-800 rounded-r-xl rounded-tl-xl'" class="inline-block p-3 max-w-[80%] text-xs shadow-sm relative group">
                             
                             <div class="flex justify-between items-center gap-3 mb-0.5">
-                                <span class="font-bold text-[10px] opacity-75" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨⚕️' : 'Secrétaire 📋'"></span>
+                                <span class="font-bold text-[10px] opacity-75" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨‍⚕️' : 'Secrétaire 📋'"></span>
                                 
                                 <template x-if="msg.senderEmail === currentUserEmail || userRole === 'doctor'">
                                     <button @click="deleteChatMessage(msg.id)" title="Supprimer le message" class="text-red-300 hover:text-red-100 font-bold text-[10px] ml-2">
@@ -464,29 +436,31 @@
                                     </button>
                                 </template>
                             </div>
-
                             <div class="leading-relaxed" x-text="msg.text"></div>
                             <div class="text-[9px] opacity-60 text-right mt-1" x-text="msg.time"></div>
                         </div>
                     </div>
                 </template>
             </div>
-
             <div class="p-3 bg-white border-t flex gap-2">
                 <input type="text" x-model="newMessageText" @keydown.enter="sendMessage()" placeholder="Rédigez votre message ici..." class="flex-1 border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
                 <button @click="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Envoyer 🚀</button>
             </div>
         </div>
     </div>
-
-    <!-- 💳 Modal سجل الأقساط والمدفوعات بالتفصيل والتاريخ -->
+    <!-- 💳 Modal سجل الأقساط والمدفوعات بالتفصيل وتاريخ الزيارة ونوع العلاج والأشعة -->
     <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
                 <h3 class="text-base font-bold text-slate-800">
-                    📂 Historique Financier: <span class="text-blue-600" x-text="selectedPatientForHistory ? selectedPatientForHistory.name : ''"></span>
+                    📂 Dossier Patient: <span class="text-blue-600" x-text="selectedPatientForHistory ? selectedPatientForHistory.name : ''"></span>
                 </h3>
-                <button @click="showPaymentHistoryModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
+                <div class="flex items-center gap-2">
+                    <button @click="openDirectAppointmentFromPatient()" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition flex items-center gap-1 shadow">
+                        📅 Prendre un RDV
+                    </button>
+                    <button @click="showPaymentHistoryModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
+                </div>
             </div>
             
             <!-- الخلاصة المالية للمريض -->
@@ -505,18 +479,47 @@
                 </div>
             </div>
 
-            <!-- قائمة الأقساط والدفعات السابقة -->
-            <div class="space-y-2">
-                <h4 class="text-xs font-bold text-slate-700">📜 Détail des versements / جدول الأقساط:</h4>
-                <div class="max-h-48 overflow-y-auto border rounded-xl divide-y text-xs">
+            <!-- 🦷 قسم الأشعة والصور الطبية والملاحظات -->
+            <div class="space-y-3 border-t pt-3">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-bold text-slate-700">🖼️ Radiographies & Photos (الأشعة والصور):</h4>
+                    <label class="bg-slate-100 hover:bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition flex items-center gap-1">
+                        <span>+ Charger une photo/radio</span>
+                        <input type="file" accept="image/*" @change="uploadPatientImage($event)" class="hidden">
+                    </label>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-56 overflow-y-auto p-1">
+                    <template x-for="(imgObj, index) in (selectedPatientForHistory?.images || [])" :key="index">
+                        <div class="bg-slate-50 border rounded-2xl p-3 space-y-2 relative group shadow-sm">
+                            <div class="relative">
+                                <img :src="imgObj.url" class="w-full h-32 object-cover rounded-xl border bg-white">
+                                <button @click="deletePatientImage(index)" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shadow transition" title="Supprimer l'image">✕</button>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Remarques / ملاحظات الطبيب:</label>
+                                <input type="text" x-model="imgObj.note" @change="updatePatientImageNote(index, imgObj.note)" placeholder="Note sur la radio..." class="w-full border p-2 rounded-lg text-xs bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="!selectedPatientForHistory?.images || selectedPatientForHistory.images.length === 0">
+                        <div class="col-span-2 p-6 text-center text-gray-400 text-xs bg-slate-50 rounded-2xl border border-dashed">Aucune radiographie ou photo enregistrée.</div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- قائمة الأقساط والدفعات مرتبطة بتاريخ الزيارة ونوع العلاج -->
+            <div class="space-y-2 border-t pt-3">
+                <h4 class="text-xs font-bold text-slate-700">📜 Détail des versements / جدول الأقساط وتواريخ الزيارة:</h4>
+                <div class="max-h-40 overflow-y-auto border rounded-xl divide-y text-xs">
                     <template x-for="tx in patientInstallmentHistory" :key="tx.id">
                         <div class="p-2.5 flex justify-between items-center hover:bg-slate-50">
                             <div>
                                 <span class="font-bold text-slate-800 block" x-text="tx.service || 'Versement tranche'"></span>
-                                <span class="text-[10px] text-gray-400 font-mono" x-text="tx.date"></span>
+                                <span class="text-[10px] text-blue-600 font-mono font-bold" x-text="'📅 Date de visite: ' + (tx.date || 'N/A')"></span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="font-bold text-emerald-600" x-text="tx.amount + ' DZD'"></span>
+                                <span class="font-bold text-emerald-600 text-sm" x-text="tx.amount + ' DZD'"></span>
                                 <button @click="deleteInstallment(tx)" class="text-red-400 hover:text-red-600 font-bold text-xs" title="Supprimer ce versement">🗑️</button>
                             </div>
                         </div>
@@ -526,18 +529,17 @@
                     </template>
                 </div>
             </div>
-
-            <!-- إدخال قسط جديد -->
+            <!-- إدخال قسط جديد مع نوع العلاج وتاريخ الزيارة -->
             <div class="border-t pt-3 space-y-2">
-                <h4 class="text-xs font-bold text-slate-700">+ Verser une nouvelle tranche / إضافة قسط:</h4>
-                <div class="flex gap-2">
-                    <input type="number" x-model="newTrancheAmount" placeholder="Montant (DZD)" class="border p-2.5 rounded-xl text-xs flex-1 outline-none focus:ring-2 focus:ring-blue-500">
-                    <button @click="addInstallment()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition">Enregistrer 💾</button>
+                <h4 class="text-xs font-bold text-slate-700">+ Enregistrer un nouveau versement / إضافة قسط جديد:</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" x-model="newTrancheService" placeholder="Acte (ex: Plombage)" class="border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" x-model="newTrancheAmount" placeholder="Montant (DZD)" class="border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                    <button @click="addInstallment()" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow">Enregistrer 💾</button>
                 </div>
             </div>
         </div>
     </div>
-
     <!-- Modal Presence Edit -->
     <div x-show="showPresenceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
@@ -560,7 +562,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Patient -->
     <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
@@ -584,7 +585,6 @@
                     </div>
                 </div>
             </div>
-
             <textarea x-model="newPatient.medicalHistory" placeholder="Antécédents médicaux / Allergies / Remarques" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
             
             <div class="flex justify-end gap-2 pt-2">
@@ -593,7 +593,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Rendez-vous -->
     <div x-show="showAppointmentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
@@ -608,7 +607,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Finance -->
     <div x-show="showFinanceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
@@ -623,7 +621,6 @@
             </div>
         </div>
     </div>
-
     <!-- Firebase Initialization -->
     <script>
         const firebaseConfig = {
@@ -635,16 +632,13 @@
             appId: "1:74767532187:web:abbcadb5c52c41a006863e",
             measurementId: "G-0NSRW400TN"
         };
-
         firebase.initializeApp(firebaseConfig);
         window.auth = firebase.auth();
         window.db = firebase.firestore();
     </script>
-
     <!-- App Logic (Alpine.js) -->
     <script>
         const DOCTOR_EMAIL = "doctor@clinic.com";
-
         function clinicApp() {
             return {
                 isLoggedIn: false,
@@ -655,55 +649,46 @@
                 currentUser: null,
                 currentUserEmail: '',
                 userRole: 'assistant',
-
                 searchQuery: '',
                 loginEmail: '',
                 loginPassword: '',
-
                 patients: [],
                 appointments: [],
                 finances: [],
                 rawPresenceLogs: [],
                 groupedPresenceLogs: [],
                 messages: [],
-
                 assistantOnline: false,
                 showChatModal: false,
                 unreadCount: 0,
                 showPresenceModal: false,
                 editingPresence: { date: '', firstLogin: '', lastLogout: '' },
                 newMessageText: '',
-
                 showPatientModal: false,
                 showAppointmentModal: false,
                 showFinanceModal: false,
                 showPaymentHistoryModal: false,
                 showPrescriptionModal: false,
-
                 selectedPatientForHistory: null,
                 selectedPatientForRx: null,
                 prescriptionText: '',
                 newTrancheAmount: 0,
-
+                newTrancheService: '',
                 quickDrugs: [
                     { name: 'Amoxicilline 1g', desc: '1 gélule 2 fois par jour pendant 7 jours' },
                     { name: 'Paracétamol 1g', desc: '1 comprimé toutes les 8h si douleur' },
                     { name: 'Ibuprofène 400mg', desc: '1 comprimé 3 fois par jour après le repas' },
                     { name: 'Bain de bouche Chlorhexidine', desc: '2 rincages par jour après le brossage' }
                 ],
-
                 currentYear: new Date().getFullYear(),
                 currentMonth: new Date().getMonth(),
                 selectedDateStr: new Date().toISOString().split('T')[0],
-
                 newPatient: { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' },
                 newApp: { patientName: '', patientPhone: '', service: '', dateTime: '' },
                 newTx: { patientName: '', service: '', amount: 0, date: '' },
-
                 isEditMode: false,
                 isEditAppMode: false,
                 isEditFinanceMode: false,
-
                 initApp() {
                     window.auth.onAuthStateChanged((user) => {
                         if (user) {
@@ -720,20 +705,17 @@
                             this.isLoggedIn = false;
                         }
                     });
-
                     window.addEventListener('beforeunload', () => {
                         if (this.currentUser) {
                             this.recordPresence('logout');
                         }
                     });
                 },
-
                 requestNotificationPermission() {
                     if ("Notification" in window && Notification.permission !== "granted") {
                         Notification.requestPermission();
                     }
                 },
-
                 login() {
                     this.loadingAuth = true;
                     this.authError = '';
@@ -744,17 +726,14 @@
                             this.authError = "Email ou mot de passe incorrect.";
                         });
                 },
-
                 logout() {
                     this.recordPresence('logout');
                     window.auth.signOut();
                 },
-
                 recordPresence(type) {
                     const now = new Date();
                     const dateStr = now.toLocaleDateString('fr-FR');
                     const timeStr = now.toLocaleTimeString('fr-FR');
-
                     window.db.collection('presence_logs').add({
                         userEmail: this.currentUserEmail,
                         role: this.userRole,
@@ -763,7 +742,6 @@
                         time: timeStr,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-
                     if (this.userRole === 'assistant') {
                         window.db.collection('status').doc('assistant').set({
                             isOnline: type === 'login',
@@ -771,21 +749,17 @@
                         });
                     }
                 },
-
                 openChatModal() {
                     this.showChatModal = true;
                     this.unreadCount = 0;
                 },
-
                 listenToPresenceAndChat() {
                     let initialLoad = true;
-
                     window.db.collection('status').doc('assistant').onSnapshot(doc => {
                         if (doc.exists) {
                             this.assistantOnline = doc.data().isOnline;
                         }
                     });
-
                     window.db.collection('chat').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
                         const newMessagesCount = snapshot.docs.length;
                         
@@ -798,45 +772,37 @@
                                 this.triggerNotification(lastMsg);
                             }
                         }
-
                         this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         initialLoad = false;
                     });
-
                     window.db.collection('presence_logs').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
                         this.rawPresenceLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         this.processGroupedPresence();
                     });
                 },
-
                 triggerNotification(msg) {
                     try {
                         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                         const oscillator = audioCtx.createOscillator();
                         const gainNode = audioCtx.createGain();
-
                         oscillator.type = 'sine';
                         oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime);
                         gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-
                         oscillator.connect(gainNode);
                         gainNode.connect(audioCtx.destination);
-
                         oscillator.start();
                         oscillator.stop(audioCtx.currentTime + 0.35);
                     } catch (e) {
                         console.log("Audio notification block: ", e);
                     }
-
                     if ("Notification" in window && Notification.permission === "granted") {
-                        const title = msg.senderRole === 'doctor' ? 'Nouveau message du Médecin 👨⚕️' : 'Nouveau message de la Secrétaire 📋';
+                        const title = msg.senderRole === 'doctor' ? 'Nouveau message du Médecin 👨‍⚕️' : 'Nouveau message de la Secrétaire 📋';
                         new Notification(title, {
                             body: msg.text,
                             icon: 'https://cdn-icons-png.flaticon.com/512/2818/2818366.png'
                         });
                     }
                 },
-
                 deleteChatMessage(msgId) {
                     if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
                         window.db.collection('chat').doc(msgId).delete().catch(err => {
@@ -844,7 +810,6 @@
                         });
                     }
                 },
-
                 processGroupedPresence() {
                     const groups = {};
                     this.rawPresenceLogs.forEach(log => {
@@ -861,18 +826,15 @@
                     });
                     this.groupedPresenceLogs = Object.values(groups).reverse();
                 },
-
                 openPresenceEditModal() {
                     const todayStr = new Date().toLocaleDateString('fr-FR');
                     this.editingPresence = { date: todayStr, firstLogin: '08:30:00', lastLogout: '16:30:00' };
                     this.showPresenceModal = true;
                 },
-
                 editDailyPresence(daily) {
                     this.editingPresence = { ...daily };
                     this.showPresenceModal = true;
                 },
-
                 saveDailyPresence() {
                     if (!this.editingPresence.date) return;
                     window.db.collection('presence_logs').add({
@@ -895,7 +857,6 @@
                     }
                     this.showPresenceModal = false;
                 },
-
                 deleteDailyPresence(dateStr) {
                     if (!confirm(`Supprimer l'historique du ${dateStr}?`)) return;
                     const logsToDelete = this.rawPresenceLogs.filter(l => l.date === dateStr);
@@ -903,7 +864,6 @@
                         window.db.collection('presence_logs').doc(l.id).delete();
                     });
                 },
-
                 sendMessage() {
                     if (!this.newMessageText.trim()) return;
                     const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -915,10 +875,8 @@
                         time: timeStr,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-
                     this.newMessageText = '';
                 },
-
                 fetchData() {
                     this.loadingData = true;
                     window.db.collection('patients').onSnapshot(snapshot => {
@@ -932,30 +890,26 @@
                         this.loadingData = false;
                     });
                 },
-
                 todayRevenue() {
                     const todayStr = new Date().toISOString().split('T')[0];
                     return this.finances
                         .filter(f => f.date === todayStr)
                         .reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
                 },
-
                 todayAppointmentsCount() {
                     const todayStr = new Date().toISOString().split('T')[0];
                     return this.appointments.filter(a => a.dateTime && a.dateTime.startsWith(todayStr)).length;
                 },
-
                 openPaymentHistoryModal(patient) {
                     this.selectedPatientForHistory = patient;
                     this.newTrancheAmount = 0;
+                    this.newTrancheService = 'Versement / Plombage';
                     this.showPaymentHistoryModal = true;
                 },
-
                 get patientInstallmentHistory() {
                     if (!this.selectedPatientForHistory) return [];
                     return this.finances.filter(f => f.patientId === this.selectedPatientForHistory.id || f.patientName === this.selectedPatientForHistory.name);
                 },
-
                 addInstallment() {
                     if (!this.selectedPatientForHistory || this.newTrancheAmount <= 0) return;
                     const amountPaidNow = Number(this.newTrancheAmount);
@@ -964,19 +918,20 @@
                     window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaidTotal });
                     
                     const todayStr = new Date().toISOString().split('T')[0];
+                    const serviceName = this.newTrancheService ? this.newTrancheService : 'Versement / القسط';
+
                     window.db.collection('finances').add({
                         patientId: this.selectedPatientForHistory.id,
                         patientName: this.selectedPatientForHistory.name,
-                        service: 'Versement tranche / القسط',
+                        service: serviceName,
                         amount: amountPaidNow,
                         date: todayStr,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-
                     this.selectedPatientForHistory.paidAmount = newPaidTotal;
                     this.newTrancheAmount = 0;
+                    this.newTrancheService = '';
                 },
-
                 deleteInstallment(tx) {
                     if (!confirm(`Voulez-vous supprimer ce versement de ${tx.amount} DZD ?`)) return;
                     
@@ -988,28 +943,68 @@
                     
                     this.selectedPatientForHistory.paidAmount = updatedPaid;
                 },
-
+                // 🦷 دوال الأشعة والصور الطبية داخل ملف المريض
+                uploadPatientImage(event) {
+                    const file = event.target.files[0];
+                    if (!file || !this.selectedPatientForHistory) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64Url = e.target.result;
+                        const currentImages = this.selectedPatientForHistory.images || [];
+                        const newImages = [...currentImages, { url: base64Url, note: '' }];
+                        
+                        window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ images: newImages });
+                        this.selectedPatientForHistory.images = newImages;
+                    };
+                    reader.readAsDataURL(file);
+                },
+                updatePatientImageNote(index, note) {
+                    if (!this.selectedPatientForHistory) return;
+                    const currentImages = [...(this.selectedPatientForHistory.images || [])];
+                    if (currentImages[index]) {
+                        currentImages[index].note = note;
+                        window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ images: currentImages });
+                    }
+                },
+                deletePatientImage(index) {
+                    if (!confirm("Voulez-vous vraiment supprimer cette image/radio ?")) return;
+                    if (!this.selectedPatientForHistory) return;
+                    const currentImages = [...(this.selectedPatientForHistory.images || [])];
+                    currentImages.splice(index, 1);
+                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ images: currentImages });
+                    this.selectedPatientForHistory.images = currentImages;
+                },
+                // 📅 زر حجز موعد مباشر من داخل ملف المريض
+                openDirectAppointmentFromPatient() {
+                    if (!this.selectedPatientForHistory) return;
+                    this.showPaymentHistoryModal = false;
+                    const nowIso = new Date().toISOString().slice(0, 16);
+                    this.newApp = {
+                        patientName: this.selectedPatientForHistory.name,
+                        patientPhone: this.selectedPatientForHistory.phone || '',
+                        service: 'Consultation / Soin',
+                        dateTime: nowIso
+                    };
+                    this.isEditAppMode = false;
+                    this.showAppointmentModal = true;
+                },
                 openPrescriptionModal(patient) {
                     this.selectedPatientForRx = patient;
                     this.prescriptionText = '';
                     this.showPrescriptionModal = true;
                 },
-
                 addDrugToPrescription(drug) {
                     this.prescriptionText += `- ${drug.name}: ${drug.desc}\n`;
                 },
-
                 printPrescription() {
                     const patientName = this.selectedPatientForRx?.name || 'Patient';
                     const rxContent = this.prescriptionText || '';
                     const currentDate = new Date().toLocaleDateString('fr-FR');
-
                     const printWindow = window.open('', '_blank', 'width=800,height=600');
                     if (!printWindow) {
                         alert("Veuillez autoriser les fenêtres pop-up pour imprimer l'ordonnance.");
                         return;
                     }
-
                     const html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>Ordonnance - ' + patientName + '</title>' +
                         '<style>@import url("https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap"); body { font-family: "Amiri", serif; padding: 40px; color: #1e293b; background: #fff; } .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 30px; } .title-ar { font-size: 24px; font-weight: bold; color: #0f172a; margin: 0; } .doctor-name { font-size: 20px; font-weight: bold; color: #1d4ed8; margin-top: 5px; } .sub-title { font-size: 13px; color: #64748b; font-family: sans-serif; direction: ltr; margin-top: 5px; } .info-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 20px; direction: ltr; font-family: sans-serif; } .rx-body { min-height: 300px; font-family: sans-serif; font-size: 16px; line-height: 1.8; direction: ltr; text-align: left; white-space: pre-wrap; } .footer { text-align: right; margin-top: 50px; font-weight: bold; font-size: 16px; font-family: sans-serif; }</style></head><body>' +
                         '<div class="header"><div class="title-ar">عيادة طب وجراحة الأسنان</div><div class="doctor-name">د. ذيبون أمينة زوجة شمامي</div><div class="sub-title">Cabinet de médecine et de chirurgie dentaire - Dr. DIBOUNE Amina ep. CHEMAMI</div></div>' +
@@ -1018,7 +1013,6 @@
                         '<div class="rx-body">' + rxContent + '</div>' +
                         '<div class="footer"><div>Signature & Cachet / التوقيع والختم</div></div>' +
                         '<' + '/script></body></html>';
-
                     printWindow.document.open();
                     printWindow.document.write(html);
                     printWindow.document.close();
@@ -1027,47 +1021,39 @@
                         printWindow.print();
                     }, 500);
                 },
-
                 getMonthYearLabel() {
                     const date = new Date(this.currentYear, this.currentMonth, 1);
                     return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
                 },
-
                 changeMonth(delta) {
                     this.currentMonth += delta;
                     if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
                     if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
                 },
-
                 get calendarBlanks() {
                     const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
                     return Array.from({ length: (firstDay === 0 ? 6 : firstDay - 1) });
                 },
-
                 get daysInMonth() {
                     const count = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
                     return Array.from({ length: count }, (_, i) => i + 1);
                 },
-
                 selectDate(day) {
                     const monthStr = String(this.currentMonth + 1).padStart(2, '0');
                     const dayStr = String(day).padStart(2, '0');
                     this.selectedDateStr = `${this.currentYear}-${monthStr}-${dayStr}`;
                 },
-
                 isDaySelected(day) {
                     const monthStr = String(this.currentMonth + 1).padStart(2, '0');
                     const dayStr = String(day).padStart(2, '0');
                     return this.selectedDateStr === `${this.currentYear}-${monthStr}-${dayStr}`;
                 },
-
                 hasAppointmentsOnDay(day) {
                     const monthStr = String(this.currentMonth + 1).padStart(2, '0');
                     const dayStr = String(day).padStart(2, '0');
                     const dateFormatted = `${this.currentYear}-${monthStr}-${dayStr}`;
                     return this.appointments.some(a => a.dateTime && a.dateTime.startsWith(dateFormatted));
                 },
-
                 get selectedDayAppointments() {
                     return this.appointments
                         .filter(a => a.dateTime && a.dateTime.startsWith(this.selectedDateStr))
@@ -1076,11 +1062,9 @@
                             return { ...a, time: timePart };
                         });
                 },
-
                 get selectedDateFormatted() {
                     return new Date(this.selectedDateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                 },
-
                 getPageTitle() {
                     if (this.currentTab === 'dashboard') return 'Tableau de bord de la clinique';
                     if (this.currentTab === 'patients') return 'Gestion des patients';
@@ -1089,12 +1073,10 @@
                     if (this.currentTab === 'presence') return 'Pointage quotidien & Horaires de la secrétaire';
                     return '';
                 },
-
                 get filteredPatients() {
                     if (!this.searchQuery) return this.patients;
                     return this.patients.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || (p.phone && p.phone.includes(this.searchQuery)));
                 },
-
                 openPatientModal() { this.newPatient = { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' }; this.isEditMode = false; this.showPatientModal = true; },
                 savePatient() {
                     if (!this.newPatient.name) return;
@@ -1107,7 +1089,6 @@
                         paidAmount: Number(this.newPatient.paidAmount) || 0,
                         medicalHistory: this.newPatient.medicalHistory || ''
                     };
-
                     if (this.isEditMode) {
                         window.db.collection('patients').doc(this.newPatient.id).update(patientData);
                     } else {
@@ -1138,7 +1119,6 @@
                         });
                     } 
                 },
-
                 openAppointmentModal() { 
                     const nowIso = new Date().toISOString().slice(0, 16);
                     this.newApp = { patientName: '', patientPhone: '', service: '', dateTime: nowIso }; 
@@ -1162,7 +1142,6 @@
                 },
                 editAppointment(a) { this.newApp = { ...a }; this.isEditAppMode = true; this.showAppointmentModal = true; },
                 deleteAppointment(id) { if (confirm('Annuler ce RDV?')) window.db.collection('appointments').doc(id).delete(); },
-
                 openFinanceModal() { this.newTx = { patientName: '', service: '', amount: 0, date: new Date().toISOString().split('T')[0] }; this.isEditFinanceMode = false; this.showFinanceModal = true; },
                 saveFinance() {
                     if (!this.newTx.patientName || !this.newTx.amount) return;
@@ -1174,7 +1153,6 @@
                         amount: Number(this.newTx.amount),
                         date: this.newTx.date
                     };
-
                     if (this.isEditFinanceMode) {
                         window.db.collection('finances').doc(this.newTx.id).update(txData);
                     } else {
@@ -1195,20 +1173,17 @@
                         });
                     }
                 },
-
                 sendWhatsAppRappel(app) {
                     if (!app.patientPhone) return alert("Pas de numéro");
                     const msg = `Bonjour ${app.patientName}, nous vous rappelons votre RDV au cabinet dentaire le ${app.dateTime}. Merci!`;
                     window.open(`https://wa.me/${app.patientPhone}?text=${encodeURIComponent(msg)}`, '_blank');
                 },
-
                 exportPatientsExcel() {
                     const ws = XLSX.utils.json_to_sheet(this.patients);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Patients");
                     XLSX.writeFile(wb, "Patients_Clinic.xlsx");
                 },
-
                 exportFinanceExcel() {
                     const ws = XLSX.utils.json_to_sheet(this.finances);
                     const wb = XLSX.utils.book_new();
