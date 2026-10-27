@@ -78,7 +78,7 @@
                     <div>
                         <div class="text-sm font-arabic font-bold text-blue-300">د. ذيبون أمينة زوجة شمامي</div>
                         <div class="text-[11px] text-gray-400">Cabinet Dentaire</div>
-                        <div class="text-xs text-emerald-400 font-normal mt-0.5" x-text="userRole === 'doctor' ? 'Rôle: Médecin 👨‍⚕️' : 'Rôle: Secrétaire 📋'"></div>
+                        <div class="text-xs text-emerald-400 font-normal mt-0.5" x-text="userRole === 'doctor' ? 'Rôle: Médecin 👨⚕️' : 'Rôle: Secrétaire 📋'"></div>
                     </div>
                 </div>
                 <nav class="p-4 space-y-2">
@@ -199,7 +199,7 @@
                                             <span :class="(patient.totalCost - patient.paidAmount) > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="px-2.5 py-1 rounded-full text-xs font-bold" x-text="((patient.totalCost || 0) - (patient.paidAmount || 0)) + ' DZD'"></span>
                                         </td>
                                         <td class="p-3 md:p-4 text-center space-x-1 space-y-1">
-                                            <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements & Tranches</button>
+                                            <button @click="openPaymentHistoryModal(patient)" class="bg-emerald-600 text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-700">💳 Paiements</button>
                                             <button @click="openPrescriptionModal(patient)" class="bg-slate-800 text-white px-2 py-1 rounded-md text-xs hover:bg-slate-700">📄 Ordonnance</button>
                                             <button @click="editPatient(patient)" class="bg-amber-500 text-white px-2 py-1 rounded-md text-xs hover:bg-amber-600 font-semibold">✏️ Modifier</button>
                                             <button x-show="userRole === 'doctor'" @click="deletePatient(patient)" class="bg-red-500 text-white px-2 py-1 rounded-md text-xs hover:bg-red-600 font-semibold">🗑️ Supprimer</button>
@@ -396,57 +396,824 @@
         </div>
     </div>
 
-    <!-- Modals & Scripts -->
+    <!-- Modals -->
+
+    <!-- 📄 Modal الوصفة الطبية (Ordonnance) -->
+    <div x-show="showPrescriptionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base font-bold text-slate-800">
+                    📄 Rédaction d'ordonnance: <span class="text-blue-600" x-text="selectedPatientForRx ? selectedPatientForRx.name : ''"></span>
+                </h3>
+                <button @click="showPrescriptionModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
+            </div>
+
+            <!-- الاختيارات السريعة للأدوية -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-700">Ajout rapide de médicaments:</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="drug in quickDrugs" :key="drug.name">
+                        <button @click="addDrugToPrescription(drug)" class="bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-2.5 py-1 rounded-lg text-xs font-medium border transition">
+                            + <span x-text="drug.name"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- نص الوصفة الطبية -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Contenu de l'ordonnance:</label>
+                <textarea x-model="prescriptionText" rows="7" placeholder="Rédigez la prescription ici..." class="w-full border p-3 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button @click="showPrescriptionModal = false" class="bg-gray-200 px-4 py-2 rounded-xl text-xs font-bold">Fermer</button>
+                <button @click="printPrescription()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    <span>🖨️ Imprimer / طباعة</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💬 Modal الشات -->
+    <div x-show="showChatModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full h-[550px] flex flex-col shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">💬</span>
+                    <div>
+                        <h3 class="font-bold text-sm">Messagerie Interne du Cabinet</h3>
+                        <p class="text-[10px] text-blue-400" x-text="userRole === 'doctor' ? 'Discussion avec la secrétaire' : 'Discussion avec le médecin'"></p>
+                    </div>
+                </div>
+                <button @click="showChatModal = false" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+
+            <!-- قائمة الرسائل مع زر الحذف -->
+            <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+                <template x-for="msg in messages" :key="msg.id">
+                    <div :class="msg.senderEmail === currentUserEmail ? 'text-right' : 'text-left'">
+                        <div :class="msg.senderEmail === currentUserEmail ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl ml-auto' : 'bg-white border text-slate-800 rounded-r-xl rounded-tl-xl'" class="inline-block p-3 max-w-[80%] text-xs shadow-sm relative group">
+                            
+                            <div class="flex justify-between items-center gap-3 mb-0.5">
+                                <span class="font-bold text-[10px] opacity-75" x-text="msg.senderRole === 'doctor' ? 'Médecin 👨⚕️' : 'Secrétaire 📋'"></span>
+                                
+                                <template x-if="msg.senderEmail === currentUserEmail || userRole === 'doctor'">
+                                    <button @click="deleteChatMessage(msg.id)" title="Supprimer le message" class="text-red-300 hover:text-red-100 font-bold text-[10px] ml-2">
+                                        🗑️
+                                    </button>
+                                </template>
+                            </div>
+
+                            <div class="leading-relaxed" x-text="msg.text"></div>
+                            <div class="text-[9px] opacity-60 text-right mt-1" x-text="msg.time"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="p-3 bg-white border-t flex gap-2">
+                <input type="text" x-model="newMessageText" @keydown.enter="sendMessage()" placeholder="Rédigez votre message ici..." class="flex-1 border p-2.5 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                <button @click="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Envoyer 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💳 Modal سجل الأقساط والمدفوعات بالتفصيل والتاريخ -->
+    <div x-show="showPaymentHistoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-base font-bold text-slate-800">
+                    📂 Historique Financier: <span class="text-blue-600" x-text="selectedPatientForHistory ? selectedPatientForHistory.name : ''"></span>
+                </h3>
+                <button @click="showPaymentHistoryModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-lg">✕</button>
+            </div>
+            
+            <!-- الخلاصة المالية للمريض -->
+            <div class="grid grid-cols-3 gap-2 text-center text-xs bg-slate-50 p-3 rounded-xl border">
+                <div>
+                    <span class="block text-gray-500 font-medium">Total Traitement</span>
+                    <span class="font-bold text-slate-800 text-sm" x-text="(selectedPatientForHistory?.totalCost || 0) + ' DZD'"></span>
+                </div>
+                <div>
+                    <span class="block text-gray-500 font-medium">Total Payé</span>
+                    <span class="font-bold text-emerald-600 text-sm" x-text="(selectedPatientForHistory?.paidAmount || 0) + ' DZD'"></span>
+                </div>
+                <div>
+                    <span class="block text-gray-500 font-medium">Reste (Dette)</span>
+                    <span class="font-bold text-red-600 text-sm" x-text="((selectedPatientForHistory?.totalCost || 0) - (selectedPatientForHistory?.paidAmount || 0)) + ' DZD'"></span>
+                </div>
+            </div>
+
+            <!-- قائمة الأقساط والدفعات السابقة -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-700">📜 Détail des versements / جدول الأقساط:</h4>
+                <div class="max-h-48 overflow-y-auto border rounded-xl divide-y text-xs">
+                    <template x-for="tx in patientInstallmentHistory" :key="tx.id">
+                        <div class="p-2.5 flex justify-between items-center hover:bg-slate-50">
+                            <div>
+                                <span class="font-bold text-slate-800 block" x-text="tx.service || 'Versement tranche'"></span>
+                                <span class="text-[10px] text-gray-400 font-mono" x-text="tx.date"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-emerald-600" x-text="tx.amount + ' DZD'"></span>
+                                <button @click="deleteInstallment(tx)" class="text-red-400 hover:text-red-600 font-bold text-xs" title="Supprimer ce versement">🗑️</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="patientInstallmentHistory.length === 0">
+                        <div class="p-4 text-center text-gray-400 text-xs">Aucun versement enregistré.</div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- إدخال قسط جديد -->
+            <div class="border-t pt-3 space-y-2">
+                <h4 class="text-xs font-bold text-slate-700">+ Verser une nouvelle tranche / إضافة قسط:</h4>
+                <div class="flex gap-2">
+                    <input type="number" x-model="newTrancheAmount" placeholder="Montant (DZD)" class="border p-2.5 rounded-xl text-xs flex-1 outline-none focus:ring-2 focus:ring-blue-500">
+                    <button @click="addInstallment()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition">Enregistrer 💾</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Presence Edit -->
+    <div x-show="showPresenceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Modifier / Ajuster Horaires Secrétaire</h3>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Date (التاريخ)</label>
+                <input type="text" x-model="editingPresence.date" class="w-full border p-2.5 rounded-lg text-sm bg-gray-50">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Heure de début / Ouverture (ساعة الدخول)</label>
+                <input type="text" x-model="editingPresence.firstLogin" placeholder="ex: 08:30:00" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Heure de fin / Fermeture (ساعة الخروج)</label>
+                <input type="text" x-model="editingPresence.lastLogout" placeholder="ex: 16:45:00" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showPresenceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="saveDailyPresence()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Patient -->
+    <div x-show="showPatientModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditMode ? 'Modifier le patient' : 'Ajouter un nouveau patient'"></h3>
+            <input type="text" x-model="newPatient.name" placeholder="Nom complet du patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" x-model="newPatient.phone" placeholder="Téléphone" class="w-full border p-2.5 rounded-lg text-sm">
+                <input type="number" x-model="newPatient.age" placeholder="Âge" class="w-full border p-2.5 rounded-lg text-sm">
+            </div>
+            
+            <div class="border-t pt-2 space-y-2" x-show="userRole === 'doctor'">
+                <label class="block text-xs font-semibold text-slate-700">Plan de paiement (DZD):</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Total (الإجمالي)</label>
+                        <input type="number" x-model="newPatient.totalCost" placeholder="Montant Total" class="w-full border p-2.5 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-0.5">Montant Payé initiale (الدفعة الأولى)</label>
+                        <input type="number" x-model="newPatient.paidAmount" placeholder="Montant Payé" class="w-full border p-2.5 rounded-lg text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <textarea x-model="newPatient.medicalHistory" placeholder="Antécédents médicaux / Allergies / Remarques" class="w-full border p-2.5 rounded-lg text-sm"></textarea>
+            
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showPatientModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" x-text="isEditMode ? 'Enregistrer les modifications' : 'Sauvegarder'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rendez-vous -->
+    <div x-show="showAppointmentModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditAppMode ? 'Modifier le rendez-vous' : 'Prendre un nouveau rendez-vous'"></h3>
+            <input type="text" x-model="newApp.patientName" placeholder="Nom du Patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newApp.patientPhone" placeholder="Téléphone du Patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newApp.service" placeholder="Acte médical (ex: Plombage, Extraction...)" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="datetime-local" x-model="newApp.dateTime" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showAppointmentModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="saveAppointment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm" x-text="isEditAppMode ? 'Sauvegarder' : 'Enregistrer'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Finance -->
+    <div x-show="showFinanceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" x-text="isEditFinanceMode ? 'Modifier la transaction' : 'Enregistrer un paiement'"></h3>
+            <input type="text" x-model="newTx.patientName" placeholder="Nom du Patient" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="text" x-model="newTx.service" placeholder="Service fourni" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="number" x-model="newTx.amount" placeholder="Montant (DZD)" class="w-full border p-2.5 rounded-lg text-sm">
+            <input type="date" x-model="newTx.date" class="w-full border p-2.5 rounded-lg text-sm">
+            <div class="flex justify-end gap-2 pt-2">
+                <button @click="showFinanceModal = false" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">Annuler</button>
+                <button @click="saveFinance()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm" x-text="isEditFinanceMode ? 'Sauvegarder' : 'Enregistrer'"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Initialization -->
     <script>
-        // إعدادات تطبيق العيادة والربط السحابي الآمن بـ Firebase مع التعديلات الجديدة داخل ملف المريض
-        // (حفظ الملف كاملاً يضمن عدم ضياع أي بيانات سحابية سابقة).
+        const firebaseConfig = {
+            apiKey: "AIzaSyBXmd7pjdj7hyuhhSyTK7_gTufkCjf52dc",
+            authDomain: "dentist-app-f2751.firebaseapp.com",
+            projectId: "dentist-app-f2751",
+            storageBucket: "dentist-app-f2751.firebasestorage.app",
+            messagingSenderId: "74767532187",
+            appId: "1:74767532187:web:abbcadb5c52c41a006863e",
+            measurementId: "G-0NSRW400TN"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+    </script>
+
+    <!-- App Logic (Alpine.js) -->
+    <script>
+        const DOCTOR_EMAIL = "doctor@clinic.com";
+
         function clinicApp() {
             return {
                 isLoggedIn: false,
-                userRole: 'doctor',
-                currentUserEmail: '',
-                loginEmail: '',
-                loginPassword: '',
-                authError: '',
+                currentTab: 'patients',
                 loadingAuth: false,
                 loadingData: false,
-                currentTab: 'dashboard',
-                patients: [],
-                finances: [],
-                appointments: [],
+                authError: '',
+                currentUser: null,
+                currentUserEmail: '',
+                userRole: 'assistant',
+
                 searchQuery: '',
-                assistantOnline: true,
+                loginEmail: '',
+                loginPassword: '',
+
+                patients: [],
+                appointments: [],
+                finances: [],
+                rawPresenceLogs: [],
+                groupedPresenceLogs: [],
+                messages: [],
+
+                assistantOnline: false,
+                showChatModal: false,
                 unreadCount: 0,
+                showPresenceModal: false,
+                editingPresence: { date: '', firstLogin: '', lastLogout: '' },
+                newMessageText: '',
+
+                showPatientModal: false,
+                showAppointmentModal: false,
+                showFinanceModal: false,
+                showPaymentHistoryModal: false,
+                showPrescriptionModal: false,
+
+                selectedPatientForHistory: null,
+                selectedPatientForRx: null,
+                prescriptionText: '',
+                newTrancheAmount: 0,
+
+                quickDrugs: [
+                    { name: 'Amoxicilline 1g', desc: '1 gélule 2 fois par jour pendant 7 jours' },
+                    { name: 'Paracétamol 1g', desc: '1 comprimé toutes les 8h si douleur' },
+                    { name: 'Ibuprofène 400mg', desc: '1 comprimé 3 fois par jour après le repas' },
+                    { name: 'Bain de bouche Chlorhexidine', desc: '2 rincages par jour après le brossage' }
+                ],
+
+                currentYear: new Date().getFullYear(),
+                currentMonth: new Date().getMonth(),
+                selectedDateStr: new Date().toISOString().split('T')[0],
+
+                newPatient: { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' },
+                newApp: { patientName: '', patientPhone: '', service: '', dateTime: '' },
+                newTx: { patientName: '', service: '', amount: 0, date: '' },
+
+                isEditMode: false,
+                isEditAppMode: false,
+                isEditFinanceMode: false,
 
                 initApp() {
-                    // التهيئة التلقائية والتحقق من حالة الاتصال بـ Firebase
-                    this.isLoggedIn = true; // يتم تحديثها حسب جلسة المستخدم
+                    window.auth.onAuthStateChanged((user) => {
+                        if (user) {
+                            this.isLoggedIn = true;
+                            this.currentUser = user;
+                            this.currentUserEmail = user.email;
+                            this.userRole = user.email.toLowerCase() === DOCTOR_EMAIL.toLowerCase() ? 'doctor' : 'assistant';
+                            
+                            this.requestNotificationPermission();
+                            this.recordPresence('login');
+                            this.fetchData();
+                            this.listenToPresenceAndChat();
+                        } else {
+                            this.isLoggedIn = false;
+                        }
+                    });
+
+                    window.addEventListener('beforeunload', () => {
+                        if (this.currentUser) {
+                            this.recordPresence('logout');
+                        }
+                    });
                 },
 
-                getPageTitle() {
-                    const titles = {
-                        'dashboard': 'Tableau de bord général',
-                        'patients': 'Dossiers Patients & Gestion des Tranches',
-                        'appointments': 'Agenda & Rendez-vous',
-                        'finance': 'Comptabilité & Recettes',
-                        'presence': 'Suivi des Horaires Secrétaire'
-                    };
-                    return titles[this.currentTab] || 'Gestion Cabinet';
+                requestNotificationPermission() {
+                    if ("Notification" in window && Notification.permission !== "granted") {
+                        Notification.requestPermission();
+                    }
                 },
 
-                filteredPatients() {
-                    if (!this.searchQuery) return this.patients;
-                    return this.patients.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || (p.phone && p.phone.includes(this.searchQuery)));
+                login() {
+                    this.loadingAuth = true;
+                    this.authError = '';
+                    window.auth.signInWithEmailAndPassword(this.loginEmail, this.loginPassword)
+                        .then(() => { this.loadingAuth = false; })
+                        .catch((err) => {
+                            this.loadingAuth = false;
+                            this.authError = "Email ou mot de passe incorrect.";
+                        });
                 },
 
-                todayAppointmentsCount() {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    return this.appointments.filter(a => a.date === todayStr).length;
+                logout() {
+                    this.recordPresence('logout');
+                    window.auth.signOut();
+                },
+
+                recordPresence(type) {
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('fr-FR');
+                    const timeStr = now.toLocaleTimeString('fr-FR');
+
+                    window.db.collection('presence_logs').add({
+                        userEmail: this.currentUserEmail,
+                        role: this.userRole,
+                        type: type,
+                        date: dateStr,
+                        time: timeStr,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    if (this.userRole === 'assistant') {
+                        window.db.collection('status').doc('assistant').set({
+                            isOnline: type === 'login',
+                            lastSeen: `${dateStr} à ${timeStr}`
+                        });
+                    }
+                },
+
+                openChatModal() {
+                    this.showChatModal = true;
+                    this.unreadCount = 0;
+                },
+
+                listenToPresenceAndChat() {
+                    let initialLoad = true;
+
+                    window.db.collection('status').doc('assistant').onSnapshot(doc => {
+                        if (doc.exists) {
+                            this.assistantOnline = doc.data().isOnline;
+                        }
+                    });
+
+                    window.db.collection('chat').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+                        const newMessagesCount = snapshot.docs.length;
+                        
+                        if (!initialLoad && newMessagesCount > this.messages.length) {
+                            const lastMsg = snapshot.docs[snapshot.docs.length - 1].data();
+                            if (lastMsg.senderEmail !== this.currentUserEmail) {
+                                if (!this.showChatModal) {
+                                    this.unreadCount++;
+                                }
+                                this.triggerNotification(lastMsg);
+                            }
+                        }
+
+                        this.messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        initialLoad = false;
+                    });
+
+                    window.db.collection('presence_logs').orderBy('createdAt', 'asc').onSnapshot(snapshot => {
+                        this.rawPresenceLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        this.processGroupedPresence();
+                    });
+                },
+
+                triggerNotification(msg) {
+                    try {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime);
+                        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+
+                        oscillator.start();
+                        oscillator.stop(audioCtx.currentTime + 0.35);
+                    } catch (e) {
+                        console.log("Audio notification block: ", e);
+                    }
+
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        const title = msg.senderRole === 'doctor' ? 'Nouveau message du Médecin 👨⚕️' : 'Nouveau message de la Secrétaire 📋';
+                        new Notification(title, {
+                            body: msg.text,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/2818/2818366.png'
+                        });
+                    }
+                },
+
+                deleteChatMessage(msgId) {
+                    if (confirm("Voulez-vous vraiment supprimer ce message ?")) {
+                        window.db.collection('chat').doc(msgId).delete().catch(err => {
+                            alert("Erreur: " + err.message);
+                        });
+                    }
+                },
+
+                processGroupedPresence() {
+                    const groups = {};
+                    this.rawPresenceLogs.forEach(log => {
+                        if (!log.date) return;
+                        if (!groups[log.date]) {
+                            groups[log.date] = { date: log.date, firstLogin: null, lastLogout: null };
+                        }
+                        if (log.type === 'login' && !groups[log.date].firstLogin) {
+                            groups[log.date].firstLogin = log.time;
+                        }
+                        if (log.type === 'logout') {
+                            groups[log.date].lastLogout = log.time;
+                        }
+                    });
+                    this.groupedPresenceLogs = Object.values(groups).reverse();
+                },
+
+                openPresenceEditModal() {
+                    const todayStr = new Date().toLocaleDateString('fr-FR');
+                    this.editingPresence = { date: todayStr, firstLogin: '08:30:00', lastLogout: '16:30:00' };
+                    this.showPresenceModal = true;
+                },
+
+                editDailyPresence(daily) {
+                    this.editingPresence = { ...daily };
+                    this.showPresenceModal = true;
+                },
+
+                saveDailyPresence() {
+                    if (!this.editingPresence.date) return;
+                    window.db.collection('presence_logs').add({
+                        userEmail: 'assistant@clinic.com',
+                        role: 'assistant',
+                        type: 'login',
+                        date: this.editingPresence.date,
+                        time: this.editingPresence.firstLogin,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    if (this.editingPresence.lastLogout) {
+                        window.db.collection('presence_logs').add({
+                            userEmail: 'assistant@clinic.com',
+                            role: 'assistant',
+                            type: 'logout',
+                            date: this.editingPresence.date,
+                            time: this.editingPresence.lastLogout,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    this.showPresenceModal = false;
+                },
+
+                deleteDailyPresence(dateStr) {
+                    if (!confirm(`Supprimer l'historique du ${dateStr}?`)) return;
+                    const logsToDelete = this.rawPresenceLogs.filter(l => l.date === dateStr);
+                    logsToDelete.forEach(l => {
+                        window.db.collection('presence_logs').doc(l.id).delete();
+                    });
+                },
+
+                sendMessage() {
+                    if (!this.newMessageText.trim()) return;
+                    const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    window.db.collection('chat').add({
+                        text: this.newMessageText,
+                        senderEmail: this.currentUserEmail,
+                        senderRole: this.userRole,
+                        time: timeStr,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    this.newMessageText = '';
+                },
+
+                fetchData() {
+                    this.loadingData = true;
+                    window.db.collection('patients').onSnapshot(snapshot => {
+                        this.patients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+                    window.db.collection('appointments').onSnapshot(snapshot => {
+                        this.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
+                    window.db.collection('finances').onSnapshot(snapshot => {
+                        this.finances = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        this.loadingData = false;
+                    });
                 },
 
                 todayRevenue() {
                     const todayStr = new Date().toISOString().split('T')[0];
-                    return this.finances.filter(f => f.date === todayStr).reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+                    return this.finances
+                        .filter(f => f.date === todayStr)
+                        .reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+                },
+
+                todayAppointmentsCount() {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    return this.appointments.filter(a => a.dateTime && a.dateTime.startsWith(todayStr)).length;
+                },
+
+                openPaymentHistoryModal(patient) {
+                    this.selectedPatientForHistory = patient;
+                    this.newTrancheAmount = 0;
+                    this.showPaymentHistoryModal = true;
+                },
+
+                get patientInstallmentHistory() {
+                    if (!this.selectedPatientForHistory) return [];
+                    return this.finances.filter(f => f.patientId === this.selectedPatientForHistory.id || f.patientName === this.selectedPatientForHistory.name);
+                },
+
+                addInstallment() {
+                    if (!this.selectedPatientForHistory || this.newTrancheAmount <= 0) return;
+                    const amountPaidNow = Number(this.newTrancheAmount);
+                    const newPaidTotal = (Number(this.selectedPatientForHistory.paidAmount) || 0) + amountPaidNow;
+                    
+                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: newPaidTotal });
+                    
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    window.db.collection('finances').add({
+                        patientId: this.selectedPatientForHistory.id,
+                        patientName: this.selectedPatientForHistory.name,
+                        service: 'Versement tranche / القسط',
+                        amount: amountPaidNow,
+                        date: todayStr,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    this.selectedPatientForHistory.paidAmount = newPaidTotal;
+                    this.newTrancheAmount = 0;
+                },
+
+                deleteInstallment(tx) {
+                    if (!confirm(`Voulez-vous supprimer ce versement de ${tx.amount} DZD ?`)) return;
+                    
+                    const currentPaid = Number(this.selectedPatientForHistory.paidAmount) || 0;
+                    const updatedPaid = Math.max(0, currentPaid - Number(tx.amount));
+                    
+                    window.db.collection('patients').doc(this.selectedPatientForHistory.id).update({ paidAmount: updatedPaid });
+                    window.db.collection('finances').doc(tx.id).delete();
+                    
+                    this.selectedPatientForHistory.paidAmount = updatedPaid;
+                },
+
+                openPrescriptionModal(patient) {
+                    this.selectedPatientForRx = patient;
+                    this.prescriptionText = '';
+                    this.showPrescriptionModal = true;
+                },
+
+                addDrugToPrescription(drug) {
+                    this.prescriptionText += `- ${drug.name}: ${drug.desc}\n`;
+                },
+
+                printPrescription() {
+                    const patientName = this.selectedPatientForRx?.name || 'Patient';
+                    const rxContent = this.prescriptionText || '';
+                    const currentDate = new Date().toLocaleDateString('fr-FR');
+
+                    const printWindow = window.open('', '_blank', 'width=800,height=600');
+                    if (!printWindow) {
+                        alert("Veuillez autoriser les fenêtres pop-up pour imprimer l'ordonnance.");
+                        return;
+                    }
+
+                    const html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>Ordonnance - ' + patientName + '</title>' +
+                        '<style>@import url("https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap"); body { font-family: "Amiri", serif; padding: 40px; color: #1e293b; background: #fff; } .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 30px; } .title-ar { font-size: 24px; font-weight: bold; color: #0f172a; margin: 0; } .doctor-name { font-size: 20px; font-weight: bold; color: #1d4ed8; margin-top: 5px; } .sub-title { font-size: 13px; color: #64748b; font-family: sans-serif; direction: ltr; margin-top: 5px; } .info-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-bottom: 20px; direction: ltr; font-family: sans-serif; } .rx-body { min-height: 300px; font-family: sans-serif; font-size: 16px; line-height: 1.8; direction: ltr; text-align: left; white-space: pre-wrap; } .footer { text-align: right; margin-top: 50px; font-weight: bold; font-size: 16px; font-family: sans-serif; }</style></head><body>' +
+                        '<div class="header"><div class="title-ar">عيادة طب وجراحة الأسنان</div><div class="doctor-name">د. ذيبون أمينة زوجة شمامي</div><div class="sub-title">Cabinet de médecine et de chirurgie dentaire - Dr. DIBOUNE Amina ep. CHEMAMI</div></div>' +
+                        '<div class="info-row"><div><strong>Patient:</strong> ' + patientName + '</div><div><strong>Date:</strong> ' + currentDate + '</div></div>' +
+                        '<div style="font-family: sans-serif; font-weight: bold; font-size: 18px; margin-bottom: 15px; text-decoration: underline;">Ordonnance / الوصفة الطبية:</div>' +
+                        '<div class="rx-body">' + rxContent + '</div>' +
+                        '<div class="footer"><div>Signature & Cachet / التوقيع والختم</div></div>' +
+                        '<' + '/script></body></html>';
+
+                    printWindow.document.open();
+                    printWindow.document.write(html);
+                    printWindow.document.close();
+                    
+                    setTimeout(() => {
+                        printWindow.print();
+                    }, 500);
+                },
+
+                getMonthYearLabel() {
+                    const date = new Date(this.currentYear, this.currentMonth, 1);
+                    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                },
+
+                changeMonth(delta) {
+                    this.currentMonth += delta;
+                    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+                    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+                },
+
+                get calendarBlanks() {
+                    const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+                    return Array.from({ length: (firstDay === 0 ? 6 : firstDay - 1) });
+                },
+
+                get daysInMonth() {
+                    const count = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+                    return Array.from({ length: count }, (_, i) => i + 1);
+                },
+
+                selectDate(day) {
+                    const monthStr = String(this.currentMonth + 1).padStart(2, '0');
+                    const dayStr = String(day).padStart(2, '0');
+                    this.selectedDateStr = `${this.currentYear}-${monthStr}-${dayStr}`;
+                },
+
+                isDaySelected(day) {
+                    const monthStr = String(this.currentMonth + 1).padStart(2, '0');
+                    const dayStr = String(day).padStart(2, '0');
+                    return this.selectedDateStr === `${this.currentYear}-${monthStr}-${dayStr}`;
+                },
+
+                hasAppointmentsOnDay(day) {
+                    const monthStr = String(this.currentMonth + 1).padStart(2, '0');
+                    const dayStr = String(day).padStart(2, '0');
+                    const dateFormatted = `${this.currentYear}-${monthStr}-${dayStr}`;
+                    return this.appointments.some(a => a.dateTime && a.dateTime.startsWith(dateFormatted));
+                },
+
+                get selectedDayAppointments() {
+                    return this.appointments
+                        .filter(a => a.dateTime && a.dateTime.startsWith(this.selectedDateStr))
+                        .map(a => {
+                            const timePart = a.dateTime.includes('T') ? a.dateTime.split('T')[1] : '';
+                            return { ...a, time: timePart };
+                        });
+                },
+
+                get selectedDateFormatted() {
+                    return new Date(this.selectedDateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                },
+
+                getPageTitle() {
+                    if (this.currentTab === 'dashboard') return 'Tableau de bord de la clinique';
+                    if (this.currentTab === 'patients') return 'Gestion des patients';
+                    if (this.currentTab === 'appointments') return 'Agenda & Rendez-vous';
+                    if (this.currentTab === 'finance') return 'Gestion financière & Recette';
+                    if (this.currentTab === 'presence') return 'Pointage quotidien & Horaires de la secrétaire';
+                    return '';
+                },
+
+                get filteredPatients() {
+                    if (!this.searchQuery) return this.patients;
+                    return this.patients.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || (p.phone && p.phone.includes(this.searchQuery)));
+                },
+
+                openPatientModal() { this.newPatient = { name: '', phone: '', age: '', totalCost: 0, paidAmount: 0, medicalHistory: '' }; this.isEditMode = false; this.showPatientModal = true; },
+                savePatient() {
+                    if (!this.newPatient.name) return;
+                    
+                    const patientData = {
+                        name: this.newPatient.name,
+                        phone: this.newPatient.phone || '',
+                        age: this.newPatient.age || '',
+                        totalCost: Number(this.newPatient.totalCost) || 0,
+                        paidAmount: Number(this.newPatient.paidAmount) || 0,
+                        medicalHistory: this.newPatient.medicalHistory || ''
+                    };
+
+                    if (this.isEditMode) {
+                        window.db.collection('patients').doc(this.newPatient.id).update(patientData);
+                    } else {
+                        window.db.collection('patients').add(patientData).then(docRef => {
+                            if (patientData.paidAmount > 0) {
+                                const todayStr = new Date().toISOString().split('T')[0];
+                                window.db.collection('finances').add({
+                                    patientId: docRef.id,
+                                    patientName: patientData.name,
+                                    service: 'Paiement initial / دفعة أولى',
+                                    amount: patientData.paidAmount,
+                                    date: todayStr,
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        });
+                    }
+                    this.showPatientModal = false;
+                },
+                editPatient(p) { this.newPatient = { ...p }; this.isEditMode = true; this.showPatientModal = true; },
+                
+                deletePatient(patient) { 
+                    if (confirm(`Supprimer le patient ${patient.name} et toutes ses transactions ?`)) {
+                        window.db.collection('patients').doc(patient.id).delete();
+                        const txToDelete = this.finances.filter(f => f.patientId === patient.id || f.patientName === patient.name);
+                        txToDelete.forEach(tx => {
+                            window.db.collection('finances').doc(tx.id).delete();
+                        });
+                    } 
+                },
+
+                openAppointmentModal() { 
+                    const nowIso = new Date().toISOString().slice(0, 16);
+                    this.newApp = { patientName: '', patientPhone: '', service: '', dateTime: nowIso }; 
+                    this.isEditAppMode = false; 
+                    this.showAppointmentModal = true; 
+                },
+                saveAppointment() {
+                    if (!this.newApp.patientName || !this.newApp.dateTime) {
+                        alert("Veuillez remplir le nom et la date du rendez-vous.");
+                        return;
+                    }
+                    if (this.isEditAppMode) {
+                        window.db.collection('appointments').doc(this.newApp.id).update(this.newApp);
+                    } else {
+                        window.db.collection('appointments').add({
+                            ...this.newApp,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    this.showAppointmentModal = false;
+                },
+                editAppointment(a) { this.newApp = { ...a }; this.isEditAppMode = true; this.showAppointmentModal = true; },
+                deleteAppointment(id) { if (confirm('Annuler ce RDV?')) window.db.collection('appointments').doc(id).delete(); },
+
+                openFinanceModal() { this.newTx = { patientName: '', service: '', amount: 0, date: new Date().toISOString().split('T')[0] }; this.isEditFinanceMode = false; this.showFinanceModal = true; },
+                saveFinance() {
+                    if (!this.newTx.patientName || !this.newTx.amount) return;
+                    if (!this.newTx.date) this.newTx.date = new Date().toISOString().split('T')[0];
+                    
+                    const txData = {
+                        patientName: this.newTx.patientName,
+                        service: this.newTx.service || 'Service dentaire',
+                        amount: Number(this.newTx.amount),
+                        date: this.newTx.date
+                    };
+
+                    if (this.isEditFinanceMode) {
+                        window.db.collection('finances').doc(this.newTx.id).update(txData);
+                    } else {
+                        window.db.collection('finances').add({
+                            ...txData,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    this.showFinanceModal = false;
+                },
+                editFinance(f) { this.newTx = { ...f }; this.isEditFinanceMode = true; this.showFinanceModal = true; },
+                deleteFinance(id) { if (confirm('Supprimer cette transaction ?')) window.db.collection('finances').doc(id).delete(); },
+                
+                clearAllFinances() {
+                    if (confirm("Voulez-vous vraiment tacher et réinitialiser TOUS les registres financiers à ZERO (0 DZD) ?")) {
+                        this.finances.forEach(f => {
+                            window.db.collection('finances').doc(f.id).delete();
+                        });
+                    }
+                },
+
+                sendWhatsAppRappel(app) {
+                    if (!app.patientPhone) return alert("Pas de numéro");
+                    const msg = `Bonjour ${app.patientName}, nous vous rappelons votre RDV au cabinet dentaire le ${app.dateTime}. Merci!`;
+                    window.open(`https://wa.me/${app.patientPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                },
+
+                exportPatientsExcel() {
+                    const ws = XLSX.utils.json_to_sheet(this.patients);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Patients");
+                    XLSX.writeFile(wb, "Patients_Clinic.xlsx");
+                },
+
+                exportFinanceExcel() {
+                    const ws = XLSX.utils.json_to_sheet(this.finances);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Finances");
+                    XLSX.writeFile(wb, "Finances_Clinic.xlsx");
                 }
             }
         }
